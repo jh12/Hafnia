@@ -1,0 +1,3 @@
+[submodule "src/Hafnia.Shared"]
+	path = src/Hafnia.Shared
+	url = git@github.com:jh12/Hafnia.Shared.git
