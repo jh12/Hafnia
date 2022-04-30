@@ -4,5 +4,5 @@ namespace Hafnia.Actors;
 
 public class SocialActor : ReceiveActor
 {
-    
+
 }

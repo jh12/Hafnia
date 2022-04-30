@@ -1,4 +1,4 @@
-﻿using Akka.Actor;
+using Akka.Actor;
 using Akka.Routing;
 using Hafnia.Actors;
 using Hafnia.Shared.Config;
