@@ -1,0 +1,29 @@
+﻿akka 
+{ 
+  actor {
+    provider = "Akka.Cluster.ClusterActorRefProvider, Akka.Cluster"
+    deployment {
+      /socials {
+        router = broadcast-group
+        routees.paths = ["/user/social"]
+        cluster {
+          enabled = on
+          allow-local-routees = on
+          use-role = social
+        }
+      }
+    }
+  }
+  remote {
+    dot-netty.tcp {
+      port = 8081
+      host = "localhost"
+      public-hostname = PUBLIC_HOSTNAME
+    }
+  }
+  cluster {
+    seed-nodes = [ "akka.tcp://SYSETM_NAME@PUBLIC_HOSTNAME:8081" ]
+  }
+  loglevel = DEBUG, 
+  loggers = [ "Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog" ]
+}

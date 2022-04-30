@@ -1,4 +1,7 @@
 ﻿using Akka.Actor;
+using Akka.Routing;
+using Hafnia.Actors;
+using Hafnia.Shared.Config;
 using Serilog;
 using Serilog.Core;
 
@@ -9,10 +12,14 @@ Logger logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .CreateLogger();
 
-const string hoconConfig = "akka { loglevel=DEBUG, loggers=[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] }";
+Log.Logger = logger;
 
-using (ActorSystem system = ActorSystem.Create("hafnia-system", hoconConfig))
+using (ActorSystem system = ActorSystemConfig.CreateSystemFromPath("SYSTEM_NAME", "Main.hocon"))
 {
+    logger.Information(system.Name);
+
+    IActorRef socialRouterRef = system.ActorOf(Props.Create<SocialActor>().WithRouter(FromConfig.Instance), "socials");
+
     logger.Information("Press CTRL+C or send sigterm to exit");
 
     Console.CancelKeyPress += (sender, args) =>

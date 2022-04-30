@@ -8,10 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.4.37" />
-    <PackageReference Include="Akka.DI.AutoFac" Version="1.4.27" />
-    <PackageReference Include="Akka.Logger.Serilog" Version="1.4.26" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+  	<PackageReference Include="Akka" Version="1.4.37" />
+  	<PackageReference Include="Akka.DI.AutoFac" Version="1.4.27" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Main.hocon">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hafnia.Shared\Hafnia.Shared.csproj" />
   </ItemGroup>
 
 </Project>
