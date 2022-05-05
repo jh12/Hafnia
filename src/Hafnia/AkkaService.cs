@@ -12,16 +12,16 @@ namespace Hafnia;
 internal class AkkaService : IHostedService, IActorBridge
 {
     private readonly IHostApplicationLifetime _appLifeTime;
-    
-    private ActorSystem _system;
-    private AutoFacDependencyResolver _dependencyResolver;
-    private IActorRef _supervisorRef;
+
+    private ActorSystem? _system;
+    private AutoFacDependencyResolver? _dependencyResolver;
+    private IActorRef? _supervisorRef;
     private SystemConfig _systemConfig;
 
     public AkkaService(IHostApplicationLifetime appLifeTime, IConfiguration configuration)
     {
         _appLifeTime = appLifeTime;
-        
+
         _systemConfig = configuration.GetSection("cluster").Get<SystemConfig>();
     }
 

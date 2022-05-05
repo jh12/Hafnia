@@ -2,6 +2,6 @@
 
 internal class SystemConfig
 {
-    public string SystemName { get; init; }
-    public string HoconPath { get; init; }
+    public string SystemName { get; init; } = null!;
+    public string HoconPath { get; init; } = null!;
 }
