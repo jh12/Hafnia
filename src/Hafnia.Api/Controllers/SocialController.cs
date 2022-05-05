@@ -12,8 +12,8 @@ public class SocialController : ControllerBase
     }
 
     [HttpGet("messages")]
-    public async Task<IActionResult> GetMessages(CancellationToken cancellationToken)
+    public Task<IActionResult> GetMessages(CancellationToken cancellationToken)
     {
-        return Ok();
+        return Task.FromResult<IActionResult>(Ok());
     }
 }
