@@ -4,7 +4,6 @@ namespace Hafnia.Services;
 
 public class ClusterSupervisor : ReceiveActor
 {
-    
     public ClusterSupervisor()
     {
 
