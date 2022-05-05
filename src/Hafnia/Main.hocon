@@ -1,9 +1,9 @@
-﻿akka 
+akka 
 { 
   actor {
     provider = "Akka.Cluster.ClusterActorRefProvider, Akka.Cluster"
     deployment {
-      /socials {
+      /supervisor/socials {
         router = broadcast-group
         routees.paths = ["/user/social"]
         cluster {

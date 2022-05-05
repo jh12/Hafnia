@@ -14,7 +14,8 @@ builder.Host
 // Services
 IServiceCollection services = builder.Services;
 
-services.AddControllers();
+services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.WriteIndented = true);
 services.AddCommonSwagger();
 
 // AppBuilder
