@@ -1,0 +1,31 @@
+name: build
+on: 
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.7
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.7
+    - run: | 
+        echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+    - name: Setup .NET Core SDK 6.0.x
+      uses: actions/setup-dotnet@v1.7.2
+      with:
+        dotnet-version: 6.0.x
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release -WarnAsError --no-restore /p:Version=${{ steps.gitversion.outputs.NuGetVersionV2 }}
+    - name: Lint
+      run: dotnet format --verify-no-changes
