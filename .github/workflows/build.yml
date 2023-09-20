@@ -1,0 +1,36 @@
+name: build
+on: 
+  push:
+    branches-ignore:
+      - main
+      - develop
+
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.15
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.15
+    - run: | 
+        echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+    - name: Setup .NET SDK 7.0.x
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Format
+      run: dotnet format --verify-no-changes
+    - name: Build
+      run: dotnet build --configuration Release --no-restore --WarnAsError /p:Version=${{ steps.gitversion.outputs.NuGetVersionV2 }}

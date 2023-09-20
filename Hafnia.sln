@@ -5,13 +5,20 @@ VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia", "src\Hafnia\Hafnia.csproj", "{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess", "src\Hafnia.DataAccess\Hafnia.DataAccess.csproj", "{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia.DataAccess", "src\Hafnia.DataAccess\Hafnia.DataAccess.csproj", "{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess.Minio", "src\Hafnia.DataAccess.Minio\Hafnia.DataAccess.Minio.csproj", "{4A639520-9685-4882-98E7-648BD82B0154}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia.DataAccess.Minio", "src\Hafnia.DataAccess.Minio\Hafnia.DataAccess.Minio.csproj", "{4A639520-9685-4882-98E7-648BD82B0154}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess.MongoDB", "src\Hafnia.DataAccess.MongoDB\Hafnia.DataAccess.MongoDB.csproj", "{8C644C97-838D-42F2-B4BA-25207DDD2148}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia.DataAccess.MongoDB", "src\Hafnia.DataAccess.MongoDB\Hafnia.DataAccess.MongoDB.csproj", "{8C644C97-838D-42F2-B4BA-25207DDD2148}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia.DTOs", "src\Hafnia.Shared\src\Hafnia.DTOs\Hafnia.DTOs.csproj", "{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{60C0BF44-2CBE-4E19-A6D0-947DA669DB9D}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build.yml = .github\workflows\build.yml
+		Dockerfile = Dockerfile
+		.github\workflows\release.yml = .github\workflows\release.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
