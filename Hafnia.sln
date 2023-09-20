@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34018.315
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia", "src\Hafnia\Hafnia.csproj", "{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess", "src\Hafnia.DataAccess\Hafnia.DataAccess.csproj", "{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess.Minio", "src\Hafnia.DataAccess.Minio\Hafnia.DataAccess.Minio.csproj", "{4A639520-9685-4882-98E7-648BD82B0154}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hafnia.DataAccess.MongoDB", "src\Hafnia.DataAccess.MongoDB\Hafnia.DataAccess.MongoDB.csproj", "{8C644C97-838D-42F2-B4BA-25207DDD2148}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hafnia.DTOs", "src\Hafnia.Shared\src\Hafnia.DTOs\Hafnia.DTOs.csproj", "{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D5CEAB-4E3B-4919-97D8-4DB5FA82961F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F273FE4-8A05-4EE4-9CDA-853C92126F4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A639520-9685-4882-98E7-648BD82B0154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A639520-9685-4882-98E7-648BD82B0154}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A639520-9685-4882-98E7-648BD82B0154}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A639520-9685-4882-98E7-648BD82B0154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C644C97-838D-42F2-B4BA-25207DDD2148}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C644C97-838D-42F2-B4BA-25207DDD2148}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C644C97-838D-42F2-B4BA-25207DDD2148}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C644C97-838D-42F2-B4BA-25207DDD2148}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFE6B4B9-92BD-49E9-BCF3-B8B162043097}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C4024E93-C7B1-4773-A9DE-BE895FF40A68}
+	EndGlobalSection
+EndGlobal
