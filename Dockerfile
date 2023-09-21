@@ -35,7 +35,7 @@ RUN dotnet restore
 COPY ./src ./src
 RUN dotnet build -c Release --no-restore -nodeReuse:false -p:VersionPrefix=$RELEASE_VERSION
 
-RUN dotnet publish "./src/Hafnia/Hafnia.csproj" --no-restore -c Release -p:VersionPrefix=$RELEASE_VERSION -o /app/publish
+RUN dotnet publish "./src/Hafnia/Hafnia.csproj" --no-restore -c Release -p:VersionPrefix=$RELEASE_VERSION /p:UseAppHost=false -o /app/publish
 
 # ====== Copy to final ====== #
 FROM publish AS final
