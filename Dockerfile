@@ -1,9 +1,9 @@
 # ====== Production ====== #
-FROM mcr.microsoft.com/dotnet/runtime:7.0-bookworm-slim-amd64 as final
+FROM mcr.microsoft.com/dotnet/runtime:7.0-bookworm-slim as final
 WORKDIR /app
 
 # ====== Build image ====== #
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
 ARG RELEASE_VERSION
 WORKDIR /sln
 
