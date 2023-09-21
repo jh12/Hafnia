@@ -5,6 +5,7 @@ WORKDIR /app
 # ====== Build image ====== #
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
 ARG RELEASE_VERSION
+ARG TARGETARCH
 WORKDIR /sln
 
 COPY ./*.sln ./
