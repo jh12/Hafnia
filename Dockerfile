@@ -1,5 +1,5 @@
 # ====== Production ====== #
-FROM mcr.microsoft.com/dotnet/runtime:7.0-bookworm-slim as final
+FROM mcr.microsoft.com/dotnet/aspnet:7.0-bookworm-slim as final
 WORKDIR /app
 
 # ====== Build image ====== #
