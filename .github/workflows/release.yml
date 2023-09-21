@@ -40,6 +40,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         file: Dockerfile
+        context: .
         push: true
         tags: |
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}
