@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using Hafnia.DataAccess.MongoDB.Repositories;
 using Hafnia.DataAccess.MongoDB.Services;
 using Hafnia.DataAccess.Repositories;
@@ -31,6 +31,7 @@ public class MongoDBModule : Module
     private static void RegisterRepositories(ContainerBuilder builder)
     {
         builder.RegisterType<MetadataRepository>().As<IMetadataRepository>().SingleInstance();
+        builder.RegisterType<WorkRepository>().As<IWorkRepository>().SingleInstance();
     }
 
     private static void RegisterServices(ContainerBuilder builder)

@@ -120,18 +120,34 @@ public class FileRepository : IFileRepository
     {
         string path = $"raw/{id}";
 
+        return await GetTextAsync(path, cancellationToken);
+    }
+
+    public async Task<string> GetAdditionalRawTextAsync(string id, string additional, CancellationToken cancellationToken)
+    {
+        string path = $"raw/{id}/{additional}";
+
+        return await GetTextAsync(path, cancellationToken);
+    }
+
+    private async Task<string> GetTextAsync(string path, CancellationToken cancellationToken)
+    {
         await using MemoryStream memoryStream = StreamManager.GetStream();
         GetObjectArgs getArgs = new GetObjectArgs()
             .WithBucket(_bucket)
             .WithObject(path)
-            .WithCallbackStream(stream =>
-            {
-                stream.CopyTo(memoryStream);
-            });
+            .WithCallbackStream(stream => { stream.CopyTo(memoryStream); });
 
-        await _minioClient.GetObjectAsync(getArgs, cancellationToken);
+        try
+        {
+            await _minioClient.GetObjectAsync(getArgs, cancellationToken);
 
-        return Encoding.UTF8.GetString(memoryStream.ToArray());
+            return Encoding.UTF8.GetString(memoryStream.ToArray());
+        }
+        catch (ObjectNotFoundException)
+        {
+            throw new Exceptions.FileNotFoundException();
+        }
     }
 
     public IAsyncEnumerable<string> GetIdsAsync(int? size, CancellationToken cancellationToken = default)
@@ -174,6 +190,18 @@ public class FileRepository : IFileRepository
     {
         string path = $"raw/{id}";
 
+        await SaveTextAsync(path, content, contentType, cancellationToken);
+    }
+
+    public async Task SaveAdditionalRawTextAsync(string id, string additional, string content, string contentType, CancellationToken cancellationToken)
+    {
+        string path = $"raw/{id}/{additional}";
+
+        await SaveTextAsync(path, content, contentType, cancellationToken);
+    }
+
+    private async Task SaveTextAsync(string path, string content, string contentType, CancellationToken cancellationToken)
+    {
         StatObjectArgs statArgs = new StatObjectArgs()
             .WithBucket(_bucket)
             .WithObject(path);
@@ -204,9 +232,19 @@ public class FileRepository : IFileRepository
 
     public async Task<bool> RawExistsAsync(string id, CancellationToken cancellationToken)
     {
+        return await ObjectExistsAsync($"raw/{id}", cancellationToken);
+    }
+
+    public async Task<bool> RawAdditionalExistsAsync(string id, string additional, CancellationToken cancellationToken)
+    {
+        return await ObjectExistsAsync($"raw/{id}/{additional}", cancellationToken);
+    }
+
+    private async Task<bool> ObjectExistsAsync(string path, CancellationToken cancellationToken)
+    {
         StatObjectArgs statArgs = new StatObjectArgs()
             .WithBucket(_bucket)
-            .WithObject($"raw/{id}");
+            .WithObject(path);
 
         try
         {
@@ -218,5 +256,17 @@ public class FileRepository : IFileRepository
         {
             return false;
         }
+    }
+
+    public Task<int> GetCountAsync(string path, CancellationToken cancellationToken)
+    {
+        ListObjectsArgs listArgs = new ListObjectsArgs()
+            .WithBucket(_bucket)
+            .WithPrefix(path)
+            .WithRecursive(true);
+
+        return Task.FromResult(_minioClient.ListObjectsAsync(listArgs, cancellationToken)
+            .Count()
+            .Wait());
     }
 }

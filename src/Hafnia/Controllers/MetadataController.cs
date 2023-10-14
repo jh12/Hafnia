@@ -16,16 +16,32 @@ public class MetadataController : ControllerBase
     }
 
     [HttpGet("getId")]
-    [Obsolete($"Use {nameof(GetMetadataFromUrl)} instead")]
-    public async Task<string> GetIdFromUrl(Uri uri, CancellationToken cancellationToken)
+    public async Task<ActionResult<string>> GetIdFromUrl(Uri uri, CancellationToken cancellationToken)
     {
-        return await _metadataRepository.GetIdFromUrlAsync(uri, cancellationToken);
+        string? id = await _metadataRepository.GetIdFromUrlAsync(uri, cancellationToken);
+
+        if (id != null)
+            return Ok(id);
+
+        return NotFound();
     }
 
     [HttpGet("getMetadataByUrl")]
+    [Obsolete($"Use {nameof(GetMetadataOrCreate)} instead")]
     public async Task<Metadata> GetMetadataFromUrl(Uri url, CancellationToken cancellationToken)
     {
         return await _metadataRepository.GetMetadataFromUrlAsync(url, cancellationToken);
+    }
+
+    [HttpPost("getOrCreate")]
+    public async Task<ActionResult<Metadata>> GetMetadataOrCreate(Metadata metadata, CancellationToken cancellationToken)
+    {
+        (bool Created, Metadata Metadata) newMetadata = await _metadataRepository.GetOrCreateMetadataAsync(metadata, cancellationToken);
+
+        if (!newMetadata.Created)
+            return Ok(newMetadata.Metadata);
+
+        return CreatedAtAction(nameof(Get), new { id = newMetadata.Metadata.Id }, newMetadata.Metadata);
     }
 
     [HttpGet("{id}")]
@@ -37,6 +53,14 @@ public class MetadataController : ControllerBase
             return NotFound();
 
         return Ok(metadata);
+    }
+
+    [HttpPost("{id}/update")]
+    public async Task<IActionResult> Update(string id, Metadata metadata, CancellationToken cancellationToken)
+    {
+        await _metadataRepository.UpdateAsync(id, metadata, cancellationToken);
+
+        return Ok();
     }
 
     [HttpPut("{id}/tags")]
@@ -91,5 +115,27 @@ public class MetadataController : ControllerBase
         string[] anyTagArray = string.IsNullOrWhiteSpace(anyTags) ? Array.Empty<string>() : anyTags.Split(",", StringSplitOptions.TrimEntries);
 
         return Task.FromResult<IActionResult>(Ok(_metadataRepository.SearchAsync(allTagArray, anyTagArray, limit, cancellationToken)));
+    }
+
+    [HttpGet("tags")]
+    public async Task<string[]> GetAllTags(CancellationToken cancellationToken = default)
+    {
+        return await _metadataRepository.GetAllTags(cancellationToken);
+    }
+
+    [HttpGet("tags/search")]
+    public async Task<string[]> SearchTags(string? allTags = null, string? anyTags = null, CancellationToken cancellationToken = default)
+    {
+        string[] allTagArray = string.IsNullOrWhiteSpace(allTags) ? Array.Empty<string>() : allTags.Split(",", StringSplitOptions.TrimEntries);
+        string[] anyTagArray = string.IsNullOrWhiteSpace(anyTags) ? Array.Empty<string>() : anyTags.Split(",", StringSplitOptions.TrimEntries);
+
+        return await _metadataRepository.SearchTags(allTagArray, anyTagArray, cancellationToken);
+    }
+
+    // TODO: Somehow limit
+    [HttpGet("all")]
+    public IAsyncEnumerable<Metadata> GetAll(CancellationToken cancellationToken)
+    {
+        return _metadataRepository.GetAllAsync(cancellationToken);
     }
 }

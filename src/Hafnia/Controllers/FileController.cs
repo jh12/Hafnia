@@ -105,6 +105,7 @@ public class FileController : ControllerBase
         {
             "PNG" => true,
             "JPEG" => true,
+            "GIF" => true,
             _ => false
         };
 
@@ -147,4 +148,11 @@ public class FileController : ControllerBase
 
         return Ok();
     }
+
+    [HttpGet("test/count")]
+    public async Task<ActionResult<int>> GetTestCount(string path, CancellationToken cancellationToken)
+    {
+        return Ok(await _fileRepository.GetCountAsync(path, cancellationToken));
+    }
+
 }
