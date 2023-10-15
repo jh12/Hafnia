@@ -69,7 +69,7 @@ app.MapControllers();
 
 app.Run();
 
-void SetupLogger(WebApplicationBuilder webApplicationBuilder)
+static void SetupLogger(WebApplicationBuilder webApplicationBuilder)
 {
     LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
 
@@ -81,6 +81,8 @@ void SetupLogger(WebApplicationBuilder webApplicationBuilder)
     {
         loggerConfiguration.WriteTo.Console(new CompactJsonFormatter());
     }
+
+    loggerConfiguration.ReadFrom.Configuration(webApplicationBuilder.Configuration);
 
     loggerConfiguration
         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
