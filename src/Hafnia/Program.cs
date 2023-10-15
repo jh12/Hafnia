@@ -96,13 +96,15 @@ static void AddCors(BaseConfig baseConfig, WebApplicationBuilder builder)
     {
         bool isCorsConfigured = false;
 
-        if (baseConfig.CorsDomains.Any())
+        if (!string.IsNullOrWhiteSpace(baseConfig.CorsDomains))
         {
+            string[] domains = baseConfig.CorsDomains.Split(',', StringSplitOptions.TrimEntries);
+
             o.AddDefaultPolicy(policy =>
             {
                 policy.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins(baseConfig.CorsDomains);
+                    .WithOrigins(domains);
             });
 
             isCorsConfigured = true;
