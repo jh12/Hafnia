@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Hafnia.Config;
 using Hafnia.DataAccess.Minio.Config;
 using Hafnia.DataAccess.MongoDB.Config;
 using Serilog;
-using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 
@@ -26,6 +26,7 @@ IServiceCollection services = builder.Services;
 services.AddSerilog(Log.Logger);
 
 services
+    .Configure<BaseConfig>(builder.Configuration)
     .Configure<MinioConfiguration>(
         builder.Configuration.GetRequiredSection(MinioConfiguration.Section))
     .Configure<MongoConfiguration>(
@@ -38,7 +39,19 @@ services.AddSwaggerGen(c =>
         $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
 });
 
+BaseConfig baseConfig = builder.Configuration.Get<BaseConfig>()!;
+
+if (baseConfig.CorsEnable)
+{
+    AddCors(baseConfig, builder);
+}
+
 var app = builder.Build();
+
+if (baseConfig.CorsEnable)
+{
+    app.UseCors();
+}
 
 app.UseSerilogRequestLogging();
 
@@ -75,4 +88,41 @@ void SetupLogger(WebApplicationBuilder webApplicationBuilder)
         .Enrich.FromLogContext();
 
     Log.Logger = loggerConfiguration.CreateLogger();
+}
+
+static void AddCors(BaseConfig baseConfig, WebApplicationBuilder builder)
+{
+    builder.Services.AddCors(o =>
+    {
+        bool isCorsConfigured = false;
+
+        if (baseConfig.CorsDomains.Any())
+        {
+            o.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .WithOrigins(baseConfig.CorsDomains);
+            });
+
+            isCorsConfigured = true;
+        }
+
+        if (baseConfig.CorsAllowAll)
+        {
+            o.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowAnyOrigin();
+            });
+
+            isCorsConfigured = true;
+        }
+
+        if (!isCorsConfigured)
+        {
+            throw new Exception("Cors enabled but no policy configured");
+        }
+    });
 }
