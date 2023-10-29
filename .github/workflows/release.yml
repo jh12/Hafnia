@@ -51,4 +51,4 @@ jobs:
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}
         build-args: RELEASE_VERSION=${{ steps.gitversion.outputs.NuGetVersionV2 }}
-        platforms: linux/amd64
+        platforms: linux/amd64, linux/arm64

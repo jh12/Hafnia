@@ -1,5 +1,5 @@
 # ====== Production ====== #
-FROM mcr.microsoft.com/dotnet/aspnet:7.0-bookworm-slim as final
+FROM mcr.microsoft.com/dotnet/nightly/aspnet:7.0-jammy-chiseled as final
 WORKDIR /app
 
 # ====== Build image ====== #
@@ -40,11 +40,7 @@ RUN dotnet publish "./src/Hafnia/Hafnia.csproj" -a $TARGETARCH --no-restore -c R
 # ====== Copy to final ====== #
 FROM publish AS final
 
-RUN addgroup --system --gid 1000 netcoregroup \
-&& adduser --system --uid 1000 --ingroup netcoregroup --shell /bin/sh netcoreuser
-
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-USER 1000
 ENTRYPOINT ["dotnet", "Hafnia.dll"]
