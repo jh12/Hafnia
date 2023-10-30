@@ -25,7 +25,7 @@ jobs:
     - name: Setup QEMU
       uses: docker/setup-qemu-action@v2
       with:
-        platforms: 'linux/amd64,linux/arm64'
+        platforms: 'linux/amd64,linux/arm64/v8'
     # Buildx
     - name: Setup Docker BuildX
       id: buildx
