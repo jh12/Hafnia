@@ -46,6 +46,7 @@ jobs:
         builder: ${{ steps.buildx.outputs.name }}
         context: .
         push: true
+        provenance: false
         tags: |
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}
