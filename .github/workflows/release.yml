@@ -54,7 +54,7 @@ jobs:
         platforms: linux/amd64
     # Login, build & publish ARM docker image
     - name: Build and push ARM
-      id: docker_build
+      id: docker_build_arm
       uses: docker/build-push-action@v4
       with:
         file: Dockerfile_arm64
