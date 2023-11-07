@@ -3,7 +3,9 @@ FROM mcr.microsoft.com/dotnet/nightly/aspnet:7.0-jammy as final
 WORKDIR /app
 
 # ====== Build image ====== #
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
+ARG TARGETARCH
+ARG BUILDPLATFORM
 ARG RELEASE_VERSION
 WORKDIR /sln
 
@@ -29,12 +31,15 @@ COPY src/Hafnia.Shared/src/Hafnia.DTOs src/Hafnia.Shared/src/Hafnia.DTOs
 RUN ls -l .
 RUN ls -l src/
 
-RUN dotnet restore
+RUN echo "Target: $TARGETARCH"
+RUN echo "Build: $BUILDPLATFORM"
+
+RUN dotnet restore -a $TARGETARCH
 
 #COPY ./test ./test
 COPY ./src ./src
 
-RUN dotnet publish "./src/Hafnia/Hafnia.csproj" --no-restore -c Release -p:VersionPrefix=$RELEASE_VERSION /p:UseAppHost=false -o /app/publish
+RUN dotnet publish "./src/Hafnia/Hafnia.csproj" -a $TARGETARCH --no-restore -c Release -p:VersionPrefix=$RELEASE_VERSION /p:UseAppHost=false -o /app/publish
 
 # ====== Copy to final ====== #
 FROM publish AS final
