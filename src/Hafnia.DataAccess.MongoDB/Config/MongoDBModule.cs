@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using V2Repo = Hafnia.DataAccess.MongoDB.Repositories.V2;
 using V2Mapper = Hafnia.DataAccess.MongoDB.Mappers.V2;
 using Hafnia.DataAccess.MongoDB.Repositories;
@@ -53,7 +53,7 @@ public class MongoDBModule : Module
     private static void RegisterServices(ContainerBuilder builder)
     {
         builder.RegisterType<IndexCreatorService>().As<IHostedService>().SingleInstance();
-        builder.RegisterType<MigrationService>().As<IHostedService>().SingleInstance();
-        builder.RegisterType<TaggingService>().As<IHostedService>().SingleInstance();
+        //builder.RegisterType<MigrationService>().As<IHostedService>().SingleInstance();
+        //builder.RegisterType<TaggingService>().As<IHostedService>().SingleInstance();
     }
 }
