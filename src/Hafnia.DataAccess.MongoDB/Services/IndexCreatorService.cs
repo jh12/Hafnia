@@ -34,5 +34,6 @@ public class IndexCreatorService : BackgroundService
         await _metadataWorkCollection.Indexes.CreateOneAsync(new CreateIndexModel<MetadataWork>(Builders<MetadataWork>.IndexKeys.Ascending(m => m.UpdatedAt)), cancellationToken: stoppingToken);
 
         await _tagCollection.Indexes.CreateOneAsync(new CreateIndexModel<V2.Tag>(Builders<V2.Tag>.IndexKeys.Ascending(m => m.Name), new CreateIndexOptions { Unique = true }), cancellationToken: stoppingToken);
+        await _tagCollection.Indexes.CreateOneAsync(new CreateIndexModel<V2.Tag>(Builders<V2.Tag>.IndexKeys.Ascending(m => m.AncestorsAndSelf)), cancellationToken: stoppingToken);
     }
 }

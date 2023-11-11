@@ -10,7 +10,8 @@ internal class TagMapper : IMapper<Tag, DTOs.Tag>, IMapper<string, ObjectId>
         return new DTOs.Tag(
             Id: toMap.Id.ToString()!,
             Name: toMap.Name,
-            ChildrenTags: toMap.Children.Select(c => c.ToString()).ToArray()
+            Parent: toMap.Parent?.ToString(),
+            Ancestors: toMap.Ancestors?.Select(a => a.ToString()).ToArray() ?? Array.Empty<string>()
         );
     }
 

@@ -6,5 +6,5 @@ public interface ITagRepository
 {
     IAsyncEnumerable<Tag> GetTagsAsync(CancellationToken cancellationToken = default);
     
-    Task<IEnumerable<Tag>> GetTagWithChildrenAsync(IEnumerable<string> rootTags, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Tag>> GetTagWithAncestorsAsync(IEnumerable<string> tagIds, CancellationToken cancellationToken = default);
 }

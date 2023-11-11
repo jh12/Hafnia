@@ -20,12 +20,4 @@ public class TagController : ControllerBase
     {
         return _tagRepository.GetTagsAsync(cancellationToken);
     }
-
-    [HttpGet("children")]
-    public async Task<IEnumerable<Tag>> GetChildren(string tags, CancellationToken cancellationToken)
-    {
-        var tagArray = string.IsNullOrWhiteSpace(tags) ? Array.Empty<string>() : tags.Split(",", StringSplitOptions.TrimEntries);
-
-        return await _tagRepository.GetTagWithChildrenAsync(tagArray, cancellationToken);
-    }
 }

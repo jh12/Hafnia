@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using IMetadataRepository = Hafnia.DataAccess.Repositories.IMetadataRepository;
 using MetadataRepository = Hafnia.DataAccess.MongoDB.Repositories.MetadataRepository;
+using Hafnia.DataAccess.Repositories.V2;
 
 namespace Hafnia.DataAccess.MongoDB.Config;
 
@@ -45,7 +46,7 @@ public class MongoDBModule : Module
     {
         builder.RegisterType<MetadataRepository>().As<IMetadataRepository>().SingleInstance();
         builder.RegisterType<WorkRepository>().As<IWorkRepository>().SingleInstance();
-        builder.RegisterType<TagRepository>().AsSelf().As<V2RepoInt.ITagRepository>().SingleInstance();
+        builder.RegisterType<TagRepository>().AsImplementedInterfaces().SingleInstance();
         
         builder.RegisterType<V2Repo.MetadataRepository>().AsSelf().As<V2RepoInt.IMetadataRepository>().SingleInstance();
     }
