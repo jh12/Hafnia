@@ -53,15 +53,6 @@ public class FileController : ControllerBase
         }
     }
 
-    [HttpGet("{id}/exists")]
-    public async Task<IActionResult> HasMedia(string id, CancellationToken cancellationToken)
-    {
-        if (await _fileRepository.ImageExistsAsync(id, cancellationToken))
-            return Ok();
-
-        return NotFound();
-    }
-
     [HttpPut("{id}")]
     [RequestSizeLimit(60_000_000)]
     public async Task<IActionResult> PutMedia(string id, CancellationToken cancellationToken)
@@ -148,11 +139,4 @@ public class FileController : ControllerBase
 
         return Ok();
     }
-
-    [HttpGet("test/count")]
-    public async Task<ActionResult<int>> GetTestCount(string path, CancellationToken cancellationToken)
-    {
-        return Ok(await _fileRepository.GetCountAsync(path, cancellationToken));
-    }
-
 }

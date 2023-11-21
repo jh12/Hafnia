@@ -1,4 +1,4 @@
-﻿using Hafnia.DataAccess.Models;
+using Hafnia.DataAccess.Models;
 using Hafnia.DataAccess.Repositories.V2;
 using Hafnia.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +16,7 @@ public class MetadataController : ControllerBase
         _metadataRepository = metadataRepository ?? throw new ArgumentNullException(nameof(metadataRepository));
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = "MetadataGet")]
     public async Task<ActionResult<Metadata>> Get(string id, CancellationToken cancellationToken)
     {
         var metadata = await _metadataRepository.GetAsync(id, cancellationToken);

@@ -9,8 +9,6 @@ public interface IFileRepository
     Task SaveFullStreamAsync(string id, Stream stream, string contentType, CancellationToken cancellationToken);
     Task SaveThumbStreamAsync(string id, Stream stream, string contentType, CancellationToken cancellationToken);
 
-    Task<bool> ImageExistsAsync(string id, CancellationToken cancellationToken);
-
     // Raw
     Task<string> GetRawTextAsync(string id, CancellationToken cancellationToken);
     Task<string> GetAdditionalRawTextAsync(string id, string additional, CancellationToken cancellationToken);
@@ -21,7 +19,4 @@ public interface IFileRepository
 
     Task<bool> RawExistsAsync(string id, CancellationToken cancellationToken);
     Task<bool> RawAdditionalExistsAsync(string id, string additional, CancellationToken cancellationToken);
-
-    // TODO: Only for testing
-    Task<int> GetCountAsync(string path, CancellationToken cancellationToken);
 }

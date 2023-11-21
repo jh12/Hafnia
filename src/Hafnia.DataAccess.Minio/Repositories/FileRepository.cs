@@ -98,24 +98,6 @@ public class FileRepository : IFileRepository
         await _minioClient.PutObjectAsync(putArgs, cancellationToken);
     }
 
-    public async Task<bool> ImageExistsAsync(string id, CancellationToken cancellationToken)
-    {
-        StatObjectArgs statArgs = new StatObjectArgs()
-            .WithBucket(_bucket)
-            .WithObject($"images/full/{id}");
-
-        try
-        {
-            await _minioClient.StatObjectAsync(statArgs, cancellationToken);
-
-            return true;
-        }
-        catch (MinioException)
-        {
-            return false;
-        }
-    }
-
     public async Task<string> GetRawTextAsync(string id, CancellationToken cancellationToken)
     {
         string path = $"raw/{id}";
@@ -256,17 +238,5 @@ public class FileRepository : IFileRepository
         {
             return false;
         }
-    }
-
-    public Task<int> GetCountAsync(string path, CancellationToken cancellationToken)
-    {
-        ListObjectsArgs listArgs = new ListObjectsArgs()
-            .WithBucket(_bucket)
-            .WithPrefix(path)
-            .WithRecursive(true);
-
-        return Task.FromResult(_minioClient.ListObjectsAsync(listArgs, cancellationToken)
-            .Count()
-            .Wait());
     }
 }
