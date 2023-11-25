@@ -12,22 +12,16 @@ namespace Hafnia.DataAccess.MongoDB.Repositories.V2;
 
 internal class TagRepository : EntityCacheBase<Tag>, ITagRepository
 {
-    private readonly IMongoCollection<Tag> _tagCollection;
     private readonly IMapper<Tag, DTOs.Tag> _dtoMapper;
 
-    public TagRepository(IMongoClient client, IOptions<MongoConfiguration> mongoConfig, IMapper<Tag, DTOs.Tag> dtoMapper)
+    public TagRepository(IMongoClient client, IOptions<MongoConfiguration> mongoConfig, IMapper<Tag, DTOs.Tag> dtoMapper) : base(client, mongoConfig, "v2_tag")
     {
-        MongoConfiguration mongoConfigValue = mongoConfig.Value;
-
-        IMongoDatabase database = client.GetDatabase(mongoConfigValue.Database);
-        _tagCollection = database.GetCollection<Tag>("v2_tag");
-
         _dtoMapper = dtoMapper ?? throw new ArgumentNullException(nameof(dtoMapper));
     }
 
     public async IAsyncEnumerable<DTOs.Tag> GetTagsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        List<Tag> tags = await _tagCollection
+        List<Tag> tags = await Collection
             .Find(FilterDefinition<Tag>.Empty)
             .ToListAsync(cancellationToken);
 
@@ -51,7 +45,7 @@ internal class TagRepository : EntityCacheBase<Tag>, ITagRepository
 
     protected override async Task<IEnumerable<Tag>> GetInnerAsync(CancellationToken cancellationToken)
     {
-        return await _tagCollection
+        return await Collection
             .Find(FilterDefinition<Tag>.Empty)
             .ToListAsync(cancellationToken);
     }

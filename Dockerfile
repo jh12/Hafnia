@@ -1,9 +1,9 @@
 # ====== Production ====== #
-FROM mcr.microsoft.com/dotnet/nightly/aspnet:7.0-jammy-chiseled as final
+FROM mcr.microsoft.com/dotnet/nightly/aspnet:8.0-jammy-chiseled as final
 WORKDIR /app
 
 # ====== Build image ====== #
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS publish
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS publish
 ARG RELEASE_VERSION
 ARG TARGETARCH
 WORKDIR /sln
