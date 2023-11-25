@@ -2,9 +2,9 @@
 
 namespace Hafnia.DataAccess.MongoDB.Mappers.V2;
 
-internal class MetadataMapper : IAsyncMapper<Db.Metadata?, DTOs.Metadata?>
+internal class MetadataMapper : IMapper<Db.Metadata?, DTOs.Metadata?>
 {
-    public async Task<DTOs.Metadata?> MapAsync(Db.Metadata? toMap, CancellationToken cancellationToken = default)
+    public DTOs.Metadata? Map(Db.Metadata? toMap)
     {
         if (toMap == null)
             return null;

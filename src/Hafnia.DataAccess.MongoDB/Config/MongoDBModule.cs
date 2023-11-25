@@ -47,7 +47,7 @@ public class MongoDBModule : Module
         builder.RegisterType<MetadataRepository>().As<IMetadataRepository>().SingleInstance();
         builder.RegisterType<WorkRepository>().As<IWorkRepository>().SingleInstance();
         builder.RegisterType<TagRepository>().AsImplementedInterfaces().SingleInstance();
-        
+
         builder.RegisterType<V2Repo.MetadataRepository>().AsSelf().As<V2RepoInt.IMetadataRepository>().SingleInstance();
     }
 
