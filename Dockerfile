@@ -1,5 +1,6 @@
 # ====== Production ====== #
 FROM mcr.microsoft.com/dotnet/nightly/aspnet:8.0-jammy-chiseled as final
+ENV COMPlus_EnableDiagnostics=0
 WORKDIR /app
 
 # ====== Build image ====== #
