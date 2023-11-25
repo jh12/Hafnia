@@ -34,9 +34,9 @@ public class WorkController : ControllerBase
     }
 
     [HttpGet("metadata/{origin}")]
-    public Task<ActionResult<MetadataWork>> GetWork(string origin, DateTime? updatedAfter, CancellationToken cancellationToken)
+    public Task<ActionResult<MetadataWork>> GetWork(string origin, DateTime? updatedAfter, int limit = 1000, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult<ActionResult<MetadataWork>>(Ok(_workRepository.GetWorkAsync(origin, updatedAfter, 1000, cancellationToken)));
+        return Task.FromResult<ActionResult<MetadataWork>>(Ok(_workRepository.GetWorkAsync(origin, updatedAfter, limit, cancellationToken)));
     }
 
     [HttpPut("metadata/{origin}")]
