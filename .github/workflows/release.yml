@@ -2,8 +2,7 @@ name: release
 on:
   push:
     branches:
-      - main
-      - develop
+      - net8
 
 jobs:
   release:
@@ -48,23 +47,23 @@ jobs:
         push: true
         provenance: false
         tags: |
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}
+          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}-net8
+          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-net8
+          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-net8
         build-args: RELEASE_VERSION=${{ steps.gitversion.outputs.NuGetVersionV2 }}
-        # platforms: linux/amd64, linux/arm64
+        platforms: linux/amd64, linux/arm64
     # Login, build & publish ARM docker image
-    - name: Build and push ARM
-      id: docker_build_arm
-      uses: docker/build-push-action@v4
-      with:
-        file: Dockerfile_arm64
-        builder: ${{ steps.buildx.outputs.name }}
-        context: .
-        push: true
-        tags: |
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}-arm
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-arm
-          octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-arm
-        build-args: RELEASE_VERSION=${{ steps.gitversion.outputs.NuGetVersionV2 }}
-        platforms: linux/arm64/v8
+    # - name: Build and push ARM
+    #   id: docker_build_arm
+    #   uses: docker/build-push-action@v4
+    #   with:
+    #     file: Dockerfile_arm64
+    #     builder: ${{ steps.buildx.outputs.name }}
+    #     context: .
+    #     push: true
+    #     tags: |
+    #       octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}-arm
+    #       octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-arm
+    #       octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.Major }}.${{ steps.gitversion.outputs.Minor }}${{ steps.gitversion.outputs.PreReleaseLabelWithDash }}-arm
+    #     build-args: RELEASE_VERSION=${{ steps.gitversion.outputs.NuGetVersionV2 }}
+    #     platforms: linux/arm64/v8
