@@ -35,15 +35,15 @@ public class MetadataController : ControllerBase
     /// <param name="anyTags">Comma separated list of tags, any must match</param>
     [HttpGet("search")]
     [ProducesResponseType(typeof(Metadata[]), StatusCodes.Status200OK)]
-    public Task<IActionResult> Search(int? limit = 100, string? allTags = null, string? anyTags = null, CancellationToken cancellationToken = default)
+    public Task<ActionResult<Metadata>> Search(int? limit = 100, string? allTags = null, string? anyTags = null, CancellationToken cancellationToken = default)
     {
         if (limit > 10_000)
-            return Task.FromResult<IActionResult>(BadRequest($"{nameof(limit)} cannot be greater than 10,000"));
+            return Task.FromResult<ActionResult<Metadata>>(BadRequest($"{nameof(limit)} cannot be greater than 10,000"));
 
         var allTagArray = string.IsNullOrWhiteSpace(allTags) ? Array.Empty<string>() : allTags.Split(",", StringSplitOptions.TrimEntries);
         var anyTagArray = string.IsNullOrWhiteSpace(anyTags) ? Array.Empty<string>() : anyTags.Split(",", StringSplitOptions.TrimEntries);
 
-        return Task.FromResult<IActionResult>(Ok(_metadataRepository.SearchAsync(allTagArray, anyTagArray, limit, cancellationToken)));
+        return Task.FromResult<ActionResult<Metadata>>(Ok(_metadataRepository.SearchAsync(allTagArray, anyTagArray, limit, cancellationToken)));
     }
 
     [HttpGet("all")]
