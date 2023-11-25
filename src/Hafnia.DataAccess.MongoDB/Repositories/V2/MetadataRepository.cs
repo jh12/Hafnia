@@ -5,7 +5,6 @@ using Hafnia.DataAccess.MongoDB.Cache;
 using Hafnia.DataAccess.MongoDB.Config;
 using Hafnia.DataAccess.MongoDB.Mappers.V2;
 using Hafnia.DataAccess.Repositories.V2;
-using Hafnia.DTOs;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -133,7 +132,7 @@ internal class MetadataRepository : IMetadataRepository
         }
     }
 
-    public async IAsyncEnumerable<MetadataWithSuggestedTags> GetTagSuggestionsAsync(string[] ids, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DTOs.MetadataWithSuggestedTags> GetTagSuggestionsAsync(string[] ids, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         IEnumerable<Tag> tags = await _tagCache.GetAsync(cancellationToken);
         List<(Tag Tag, Regex Pattern)> tagPatterns = tags.SelectMany(t => t.Patterns.Select(p => (Tag: t, Pattern: new Regex(p, RegexOptions.IgnoreCase)))).ToList();
@@ -159,7 +158,7 @@ internal class MetadataRepository : IMetadataRepository
 
                 DTOs.Metadata map = _metadataMapper.Map(metadata);
 
-                yield return new MetadataWithSuggestedTags
+                yield return new DTOs.MetadataWithSuggestedTags
                 (
                     map.Id,
                     map.OriginalId,
@@ -169,6 +168,51 @@ internal class MetadataRepository : IMetadataRepository
                     found.Select(f => f.ToString()).ToArray()
                 );
             }
+        }
+    }
+
+    public async IAsyncEnumerable<DTOs.Metadata> GetForCollectionAsync(DTOs.Collection collection, string sortField, bool ascending, int page, int pageSize, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
+        FilterDefinition<Metadata> filter = filterBuilder.Empty;
+
+        if (collection.IncludedTags.Any())
+        {
+            foreach (string includeTag in collection.IncludedTags)
+            {
+                IEnumerable<DTOs.Tag> allTags = await _tagRepository.GetTagWithAncestorsAsync(new[] { includeTag }, cancellationToken);
+
+                ObjectId[] allTagIds = allTags.Select(t => _tagIdMapper.Map(t.Id)).ToArray();
+
+                filter &= filterBuilder.AnyIn(m => m.Tags, allTagIds);
+            }
+        }
+
+        if (collection.ExcludedTags.Any())
+        {
+            IEnumerable<DTOs.Tag> allTags = await _tagRepository.GetTagWithAncestorsAsync(collection.ExcludedTags, cancellationToken);
+
+            ObjectId[] allTagIds = allTags.Select(t => _tagIdMapper.Map(t.Id)).ToArray();
+
+            filter &= filterBuilder.Not(filterBuilder.AnyIn(m => m.Tags, allTagIds));
+        }
+
+        SortDefinition<Metadata> sorting = ascending switch
+        {
+            true => Builders<Metadata>.Sort.Ascending(sortField),
+            false => Builders<Metadata>.Sort.Descending(sortField)
+        };
+
+        IAsyncCursor<Metadata> cursor = await _metadataCollection
+            .Find(filter)
+            .Sort(sorting)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToCursorAsync(cancellationToken);
+
+        foreach (Metadata metadata in cursor.ToEnumerable(cancellationToken))
+        {
+            yield return _metadataMapper.Map(metadata);
         }
     }
 }
