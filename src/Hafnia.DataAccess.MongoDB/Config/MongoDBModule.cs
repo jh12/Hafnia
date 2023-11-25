@@ -1,17 +1,14 @@
-using Autofac;
-using V2Repo = Hafnia.DataAccess.MongoDB.Repositories.V2;
-using V2Mapper = Hafnia.DataAccess.MongoDB.Mappers.V2;
+﻿using Autofac;
 using Hafnia.DataAccess.MongoDB.Repositories;
 using Hafnia.DataAccess.MongoDB.Repositories.V2;
-using Hafnia.DataAccess.MongoDB.Services;
 using Hafnia.DataAccess.Repositories;
-using V2RepoInt = Hafnia.DataAccess.Repositories.V2;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using IMetadataRepository = Hafnia.DataAccess.Repositories.IMetadataRepository;
 using MetadataRepository = Hafnia.DataAccess.MongoDB.Repositories.MetadataRepository;
-using Hafnia.DataAccess.Repositories.V2;
+using V2Mapper = Hafnia.DataAccess.MongoDB.Mappers.V2;
+using V2Repo = Hafnia.DataAccess.MongoDB.Repositories.V2;
+using V2RepoInt = Hafnia.DataAccess.Repositories.V2;
 
 namespace Hafnia.DataAccess.MongoDB.Config;
 
@@ -22,7 +19,6 @@ public class MongoDBModule : Module
         RegisterConnection(builder);
         RegisterMappers(builder);
         RegisterRepositories(builder);
-        RegisterServices(builder);
     }
 
     private static void RegisterConnection(ContainerBuilder builder)
@@ -49,12 +45,5 @@ public class MongoDBModule : Module
         builder.RegisterType<TagRepository>().AsImplementedInterfaces().SingleInstance();
 
         builder.RegisterType<V2Repo.MetadataRepository>().AsSelf().As<V2RepoInt.IMetadataRepository>().SingleInstance();
-    }
-
-    private static void RegisterServices(ContainerBuilder builder)
-    {
-        builder.RegisterType<IndexCreatorService>().As<IHostedService>().SingleInstance();
-        //builder.RegisterType<MigrationService>().As<IHostedService>().SingleInstance();
-        //builder.RegisterType<TaggingService>().As<IHostedService>().SingleInstance();
     }
 }
