@@ -1,4 +1,4 @@
-using Hafnia.DataAccess.Models;
+﻿using Hafnia.DataAccess.Models;
 using Hafnia.DataAccess.Repositories.V2;
 using Hafnia.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +25,15 @@ public class MetadataController : ControllerBase
             return NotFound();
 
         return Ok(metadata);
+    }
+
+    [HttpGet("tags/suggest")]
+    public Task<ActionResult<MetadataWithSuggestedTags>> SuggestTags(string ids, CancellationToken cancellationToken)
+    {
+        string[] metadataArray = string.IsNullOrWhiteSpace(ids) ? Array.Empty<string>() : ids.Split(",", StringSplitOptions.TrimEntries);
+
+
+        return Task.FromResult<ActionResult<MetadataWithSuggestedTags>>(Ok(_metadataRepository.GetTagSuggestionsAsync(metadataArray, cancellationToken)));
     }
 
     /// <summary>
