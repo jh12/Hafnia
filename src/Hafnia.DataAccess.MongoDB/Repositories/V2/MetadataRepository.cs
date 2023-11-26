@@ -19,7 +19,6 @@ internal class MetadataRepository : IMetadataRepository
     private readonly IEntityCache<Tag> _tagCache;
     private readonly IMapper<Metadata, DTOs.Metadata> _metadataMapper;
     private readonly IMapper<string, ObjectId> _tagIdMapper;
-    private readonly IMapper<Tag, DTOs.Tag> _tagMapper;
     private readonly IMongoCollection<Metadata> _metadataCollection;
 
     public MetadataRepository(
@@ -28,14 +27,12 @@ internal class MetadataRepository : IMetadataRepository
         IEntityCache<Tag> tagCache,
         IMapper<Metadata, DTOs.Metadata> metadataMapper,
         IMapper<string, ObjectId> tagIdMapper,
-        IMapper<Tag, DTOs.Tag> tagMapper,
         IOptions<MongoConfiguration> mongoConfig)
     {
         _tagRepository = tagRepository ?? throw new ArgumentNullException(nameof(tagRepository));
         _tagCache = tagCache ?? throw new ArgumentNullException(nameof(tagCache));
         _metadataMapper = metadataMapper ?? throw new ArgumentNullException(nameof(metadataMapper));
         _tagIdMapper = tagIdMapper ?? throw new ArgumentNullException(nameof(tagIdMapper));
-        _tagMapper = tagMapper ?? throw new ArgumentNullException(nameof(tagMapper));
 
         MongoConfiguration mongoConfigValue = mongoConfig.Value;
 
@@ -147,7 +144,7 @@ internal class MetadataRepository : IMetadataRepository
         {
             foreach (Metadata metadata in cursor.Current)
             {
-                HashSet<ObjectId> found = new HashSet<ObjectId>();
+                HashSet<ObjectId> found = new();
 
                 foreach (string sourceTag in metadata.Source.Tags)
                 {
@@ -176,7 +173,7 @@ internal class MetadataRepository : IMetadataRepository
         FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
         FilterDefinition<Metadata> filter = filterBuilder.Empty;
 
-        if (collection.IncludedTags.Any())
+        if (collection.IncludedTags.Length != 0)
         {
             foreach (string includeTag in collection.IncludedTags)
             {
@@ -188,7 +185,7 @@ internal class MetadataRepository : IMetadataRepository
             }
         }
 
-        if (collection.ExcludedTags.Any())
+        if (collection.ExcludedTags.Length != 0)
         {
             IEnumerable<DTOs.Tag> allTags = await _tagRepository.GetTagWithAncestorsAsync(collection.ExcludedTags, cancellationToken);
 

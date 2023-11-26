@@ -48,6 +48,11 @@ if (baseConfig.CorsEnable)
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebAssemblyDebugging();
+}
+
 if (baseConfig.CorsEnable)
 {
     app.UseCors();
@@ -60,10 +65,14 @@ app.UseSwaggerUI(o =>
 {
     o.EnableTryItOutByDefault();
     o.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-    o.RoutePrefix = string.Empty;
+    o.RoutePrefix = "api";
 });
 
+app.UseBlazorFrameworkFiles();
+app.MapFallbackToFile("index.html");
+
 app.UseRouting();
+app.UseStaticFiles();
 
 app.MapControllers();
 

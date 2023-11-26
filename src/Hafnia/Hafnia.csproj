@@ -14,6 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
     <PackageReference Include="Serilog" Version="3.0.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
@@ -27,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Hafnia.DataAccess.Minio\Hafnia.DataAccess.Minio.csproj" />
     <ProjectReference Include="..\Hafnia.DataAccess.MongoDB\Hafnia.DataAccess.MongoDB.csproj" />
+    <ProjectReference Include="..\Hafnia.Frontend\Hafnia.Frontend.csproj" />
   </ItemGroup>
 
 </Project>

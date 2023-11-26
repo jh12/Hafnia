@@ -1,0 +1,163 @@
+﻿@page "/collections/{CollectionId?}"
+@using Hafnia.DTOs
+@using Hafnia.Frontend.Repositories
+
+@inject TagRepository TagRepository
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudGrid Class="mt-1 px-2">
+        <MudText Typo="Typo.h6" Class="mt-4 mb-2">Collections</MudText>
+
+        <MudGrid>
+            @foreach (Collection collection in _childCollections)
+            {
+                <MudItem xs="6" sm="4" md="3" lg="2" Style="cursor: pointer;" @onclick="() => CollectionClicked(collection)">
+                    <MudCard Square="true" Elevation="4">
+                        <MudCardMedia Image="@($"/media/file/{collection.ThumbnailId}/thumbnail")" Height="124" />
+                        <MudCardContent Class="pa-2">
+                                <MudText Typo="Typo.body1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@collection.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+            }
+
+        </MudGrid>
+
+        @if (_selectedContent.Any())
+        {
+            <MudText Typo="Typo.h6" Class="mt-4 mb-2">@(_selectedCollection == null ? "Collections" : _selectedCollection.Name)</MudText>
+
+            <MudGrid Class="mt-2 mb-2 d-flex justify-center flex-grow-1 gap-4">
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1"/>
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" Disabled="_selectedContent.Length < PageSize"/>
+            </MudGrid>
+
+            <MudItem xs="12" Class="masonry-with-columns">
+                @foreach (Metadata metadata in _selectedContent)
+                {
+                    <MudItem Class="masonry-with-columns-item image-with-overlay" @onclick="() => MetadataClicked(metadata)">
+                        <MudImage Src="@($"/media/file/{metadata.Id}/thumbnail")" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" />
+                        <div class="image-overlay">
+                            <div>
+                                <MudText Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@(string.IsNullOrEmpty(metadata.Title) ? metadata.Id : metadata.Title)</MudText>
+                            </div>
+                        </div>
+                    </MudItem>
+                }
+            </MudItem>
+
+            <MudGrid Class="mt-2 mb-12 d-flex justify-center flex-grow-1 gap-4">
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1"/>
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" Disabled="_selectedContent.Length < PageSize" />
+            </MudGrid>
+        }
+
+        <MudOverlay @bind-Visible="_isOverlayVisible" DarkBackground="true" ZIndex="9999" AutoClose="true">
+            @if (_focusedContent != null)
+            {
+                <MudItem Class="object-top">
+                    <MudItem Class="py-2">
+                        <MudText>@_focusedContent.Title</MudText>
+                            <MudItem Style="margin-left:-4px;">
+                                @foreach (string tag in _focusedContent.Tags)
+                            {
+                                <MudChip Text="@_tagMap[tag].Name" Size="Size.Small" Label="true" />
+                            }
+                        </MudItem>
+                    </MudItem>
+                    <MudImage Src="@($"/media/file/{_focusedContent.Id}")" ObjectFit="ObjectFit.Contain" ObjectPosition="ObjectPosition.Top" Fluid="true" Style="max-height: 75vmin" />
+                </MudItem>
+            }
+        </MudOverlay>
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string? CollectionId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int Page { get; set; } = 1;
+
+    [SupplyParameterFromQuery]
+    public int PageSize { get; set; } = 100;
+
+    private Dictionary<string, Tag> _tagMap = new();
+
+    private Collection[]? _allCollections;
+
+    private Collection? _selectedCollection;
+    private Metadata[] _selectedContent = Array.Empty<Metadata>();
+    private Collection[] _childCollections = Array.Empty<Collection>();
+
+    private bool _isOverlayVisible;
+    private Metadata? _focusedContent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tag[] tags = await TagRepository.GetAllTagsAsync();
+        _tagMap = tags.ToDictionary(t => t.Id);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (_allCollections == null)
+        {
+            _allCollections = (await HttpClient.GetFromJsonAsync<Collection[]>("v2/collection"))!;
+        }
+
+        Dictionary<string, Collection> collectionMap = _allCollections.ToDictionary(c => c.Id);
+
+        if (!string.IsNullOrEmpty(CollectionId))
+        {
+            _selectedCollection = _allCollections.SingleOrDefault(c => c.Id == CollectionId);
+            _childCollections = _selectedCollection?.Children.Select(c => collectionMap[c]).ToArray() ?? Array.Empty<Collection>();
+
+            _selectedContent = (await HttpClient.GetFromJsonAsync<Metadata[]>($"v2/collection/{CollectionId}/content?page={Page}&pageSize={PageSize}"))!;
+        }
+        else
+        {
+            _selectedCollection = null;
+            _childCollections = _allCollections.Where(c => c.IsRoot).ToArray();
+            _selectedContent = Array.Empty<Metadata>();
+        }
+    }
+
+    private void CollectionClicked(Collection collection)
+    {
+        NavigationManager.NavigateTo($"/collections/{collection.Id}");
+    }
+
+    private void PreviousPage()
+    {
+        NavigateToPage(Page - 1);
+    }
+
+    private void NextPage()
+    {
+        NavigateToPage(Page + 1);
+    }
+
+    private void NavigateToPage(int page)
+    {
+        string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["pageSize"] = PageSize
+        });
+
+        NavigationManager.NavigateTo(newUri);
+    }
+
+    private void MetadataClicked(Metadata metadata)
+    {
+        _focusedContent = metadata;
+        _isOverlayVisible = true;
+        StateHasChanged();
+    }
+}

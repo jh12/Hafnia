@@ -17,6 +17,7 @@ COPY ./*.sln ./
 #RUN for file in $(ls *.csproj); do mkdir -p src/${file%.*}/ && mv $file src/${file%.*}/; done
 
 COPY src/Hafnia src/Hafnia
+COPY src/Hafnia.Frontend src/Hafnia.Frontend
 COPY src/Hafnia.DataAccess src/Hafnia.DataAccess
 COPY src/Hafnia.DataAccess.Minio src/Hafnia.DataAccess.Minio
 COPY src/Hafnia.DataAccess.MongoDB src/Hafnia.DataAccess.MongoDB
