@@ -1,6 +1,7 @@
-﻿using Hafnia.DataAccess.Models;
+﻿using Hafnia.DataAccess.Exceptions;
+using Hafnia.DataAccess.Models;
 using Hafnia.DataAccess.Repositories.V2;
-using Hafnia.DTOs;
+using Hafnia.DTOs.V2;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hafnia.Controllers.V2;
@@ -17,7 +18,7 @@ public class MetadataController : ControllerBase
     }
 
     [HttpGet("{id}", Name = "MetadataGet")]
-    public async Task<ActionResult<Metadata>> Get(string id, CancellationToken cancellationToken)
+    public async Task<ActionResult<MetadataV2>> Get(string id, CancellationToken cancellationToken)
     {
         var metadata = await _metadataRepository.GetAsync(id, cancellationToken);
 
@@ -27,13 +28,30 @@ public class MetadataController : ControllerBase
         return Ok(metadata);
     }
 
-    [HttpGet("tags/suggest")]
-    public Task<ActionResult<MetadataWithSuggestedTags>> SuggestTags(string ids, CancellationToken cancellationToken)
+    [HttpPost("getOrCreate")]
+    public async Task<ActionResult<MetadataV2>> GetMetadataOrCreate(MetadataSourceV2 metadataSource, CancellationToken cancellationToken)
     {
-        string[] metadataArray = string.IsNullOrWhiteSpace(ids) ? Array.Empty<string>() : ids.Split(",", StringSplitOptions.TrimEntries);
+        (bool Created, MetadataV2 Metadata) newMetadata = await _metadataRepository.GetOrCreateAsync(metadataSource, cancellationToken);
 
+        if (!newMetadata.Created)
+            return Ok(newMetadata.Metadata);
 
-        return Task.FromResult<ActionResult<MetadataWithSuggestedTags>>(Ok(_metadataRepository.GetTagSuggestionsAsync(metadataArray, cancellationToken)));
+        return CreatedAtRoute("MetadataGet", new { id = newMetadata.Metadata.Id }, newMetadata.Metadata);
+    }
+
+    [HttpPut("{id}/source")]
+    public async Task<IActionResult> UpdateMetadata(string id, MetadataSourceV2 source, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _metadataRepository.UpdateFromSourceAsync(id, source, cancellationToken);
+        }
+        catch (NotFoundException)
+        {
+            return BadRequest();
+        }
+
+        return Ok();
     }
 
     /// <summary>
@@ -43,20 +61,20 @@ public class MetadataController : ControllerBase
     /// <param name="allTags">Comma separated list of tags, all must match</param>
     /// <param name="anyTags">Comma separated list of tags, any must match</param>
     [HttpGet("search")]
-    [ProducesResponseType(typeof(Metadata[]), StatusCodes.Status200OK)]
-    public Task<ActionResult<Metadata>> Search(int? limit = 100, string? allTags = null, string? anyTags = null, CancellationToken cancellationToken = default)
+    [ProducesResponseType(typeof(MetadataV2[]), StatusCodes.Status200OK)]
+    public Task<ActionResult<MetadataV2>> Search(int? limit = 100, string? allTags = null, string? anyTags = null, CancellationToken cancellationToken = default)
     {
         if (limit > 10_000)
-            return Task.FromResult<ActionResult<Metadata>>(BadRequest($"{nameof(limit)} cannot be greater than 10,000"));
+            return Task.FromResult<ActionResult<MetadataV2>>(BadRequest($"{nameof(limit)} cannot be greater than 10,000"));
 
         var allTagArray = string.IsNullOrWhiteSpace(allTags) ? Array.Empty<string>() : allTags.Split(",", StringSplitOptions.TrimEntries);
         var anyTagArray = string.IsNullOrWhiteSpace(anyTags) ? Array.Empty<string>() : anyTags.Split(",", StringSplitOptions.TrimEntries);
 
-        return Task.FromResult<ActionResult<Metadata>>(Ok(_metadataRepository.SearchAsync(allTagArray, anyTagArray, limit, cancellationToken)));
+        return Task.FromResult<ActionResult<MetadataV2>>(Ok(_metadataRepository.SearchAsync(allTagArray, anyTagArray, limit, cancellationToken)));
     }
 
     [HttpGet("all")]
-    public IAsyncEnumerable<Metadata> GetAll(string? after, int limit, string? tagInclude = null, string? tagExclude = null, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MetadataV2> GetAll(string? after, int limit, string? tagInclude = null, string? tagExclude = null, CancellationToken cancellationToken = default)
     {
         if (limit < 1)
             limit = 0;
@@ -70,5 +88,17 @@ public class MetadataController : ControllerBase
         TagFilter tagFilter = new TagFilter(tagIncludeArray, tagExcludeArray);
 
         return _metadataRepository.GetAllAsync(after, limit, tagFilter, cancellationToken);
+    }
+
+    [HttpGet("source/all")]
+    public IAsyncEnumerable<MetadataWithSourceV2> GetAll(string? after, int limit, CancellationToken cancellationToken = default)
+    {
+        if (limit < 1)
+            limit = 0;
+
+        if (limit > 1000)
+            limit = 1000;
+
+        return _metadataRepository.GetSourceAllAsync(after, limit, cancellationToken);
     }
 }

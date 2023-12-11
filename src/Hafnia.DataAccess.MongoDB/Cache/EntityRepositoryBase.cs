@@ -12,6 +12,8 @@ internal abstract class EntityCacheBase<T> : IEntityCache<T>
     private readonly List<T> _entities = new();
     public IMongoCollection<T> Collection { get; set; }
 
+    protected SemaphoreSlim Semaphore => _semaphore;
+
     protected EntityCacheBase(IMongoClient client, IOptions<MongoConfiguration> mongoConfig, string collectionName)
     {
         MongoConfiguration mongoConfigValue = mongoConfig.Value;

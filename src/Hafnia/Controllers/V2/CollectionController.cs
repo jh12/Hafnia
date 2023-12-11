@@ -1,6 +1,7 @@
 ﻿using Hafnia.DataAccess.Exceptions;
 using Hafnia.DataAccess.Repositories.V2;
 using Hafnia.DTOs;
+using Hafnia.DTOs.V2;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hafnia.Controllers.V2;
@@ -22,12 +23,18 @@ public class CollectionController : ControllerBase
         return Task.FromResult<ActionResult<Collection>>(Ok(_collectionRepository.GetAsync(cancellationToken)));
     }
 
+    [HttpGet("{id}/children")]
+    public Task<ActionResult<Collection>> GetChildren(string id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<ActionResult<Collection>>(Ok(_collectionRepository.GetChildrenAsync(id, cancellationToken)));
+    }
+
     [HttpGet("{id}/content")]
     public Task<ActionResult<Collection>> GetContent(string id, string sortingField = "id", bool ascending = true, int page = 1, int pageSize = 100, CancellationToken cancellationToken = default)
     {
         try
         {
-            IAsyncEnumerable<Metadata> content = _collectionRepository.GetContentAsync(id, sortingField, ascending, page, pageSize, cancellationToken);
+            IAsyncEnumerable<MetadataV2> content = _collectionRepository.GetContentAsync(id, sortingField, ascending, page, pageSize, cancellationToken);
             return Task.FromResult<ActionResult<Collection>>(Ok(content));
         }
         catch (NotFoundException)

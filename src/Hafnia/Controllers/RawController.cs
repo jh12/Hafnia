@@ -11,9 +11,9 @@ namespace Hafnia.Controllers;
 public class RawController : ControllerBase
 {
     private readonly IFileRepository _fileRepository;
-    private readonly IMetadataRepository _metadataRepository;
+    private readonly DataAccess.Repositories.V2.IMetadataRepository _metadataRepository;
 
-    public RawController(IFileRepository fileRepository, IMetadataRepository metadataRepository)
+    public RawController(IFileRepository fileRepository, DataAccess.Repositories.V2.IMetadataRepository metadataRepository)
     {
         _fileRepository = fileRepository ?? throw new ArgumentNullException(nameof(fileRepository));
         _metadataRepository = metadataRepository ?? throw new ArgumentNullException(nameof(metadataRepository));

@@ -12,11 +12,11 @@ namespace Hafnia.Controllers;
 public class FileController : ControllerBase
 {
     private readonly IFileRepository _fileRepository;
-    private readonly IMetadataRepository _metadataRepository;
+    private readonly DataAccess.Repositories.V2.IMetadataRepository _metadataRepository;
     private readonly Serilog.ILogger _logger;
     private static readonly RecyclableMemoryStreamManager MemoryManager = new();
 
-    public FileController(IFileRepository fileRepository, IMetadataRepository metadataRepository, Serilog.ILogger logger)
+    public FileController(IFileRepository fileRepository, DataAccess.Repositories.V2.IMetadataRepository metadataRepository, Serilog.ILogger logger)
     {
         _fileRepository = fileRepository ?? throw new ArgumentNullException(nameof(fileRepository));
         _metadataRepository = metadataRepository ?? throw new ArgumentNullException(nameof(metadataRepository));
@@ -110,8 +110,6 @@ public class FileController : ControllerBase
             await _fileRepository.SaveFullStreamAsync(id, stream, format.DefaultMimeType,
                 cancellationToken);
 
-            await _metadataRepository.SetHasFileAsync(id, true, cancellationToken);
-
             // TODO: Delegate thumbnail generation to background service?
             using MemoryStream thumbStream = MemoryManager.GetStream();
             image.Mutate(x => x.Resize(new ResizeOptions()
@@ -124,8 +122,6 @@ public class FileController : ControllerBase
 
             thumbStream.Position = 0;
             await _fileRepository.SaveThumbStreamAsync(id, thumbStream, "image/png", cancellationToken);
-
-            await _metadataRepository.SetHasThumbnailAsync(id, true, cancellationToken);
         }
         catch (Exceptions.FileExistsException)
         {

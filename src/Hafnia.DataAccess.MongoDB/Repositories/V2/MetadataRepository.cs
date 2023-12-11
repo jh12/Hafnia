@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
+using Hafnia.DataAccess.Exceptions;
 using Hafnia.DataAccess.Models;
-using Hafnia.DataAccess.MongoDB.Cache;
 using Hafnia.DataAccess.MongoDB.Config;
 using Hafnia.DataAccess.MongoDB.Mappers.V2;
 using Hafnia.DataAccess.Repositories.V2;
@@ -9,29 +8,31 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Metadata = Hafnia.DataAccess.MongoDB.Models.V2.Metadata;
-using Tag = Hafnia.DataAccess.MongoDB.Models.V2.Tag;
 
 namespace Hafnia.DataAccess.MongoDB.Repositories.V2;
 
 internal class MetadataRepository : IMetadataRepository
 {
     private readonly ITagRepository _tagRepository;
-    private readonly IEntityCache<Tag> _tagCache;
-    private readonly IMapper<Metadata, DTOs.Metadata> _metadataMapper;
+    private readonly IMapper<Metadata, DTOs.V2.MetadataV2> _metadataMapper;
+    private readonly IAsyncMapper<IEnumerable<Metadata>, IEnumerable<DTOs.V2.MetadataWithSourceV2>> _metadataSourceMapper;
+    private readonly IMapper<DTOs.V2.MetadataSourceV2, Metadata> _sourceMapper;
     private readonly IMapper<string, ObjectId> _tagIdMapper;
     private readonly IMongoCollection<Metadata> _metadataCollection;
 
     public MetadataRepository(
         IMongoClient client,
         ITagRepository tagRepository,
-        IEntityCache<Tag> tagCache,
-        IMapper<Metadata, DTOs.Metadata> metadataMapper,
+        IMapper<Metadata, DTOs.V2.MetadataV2> metadataMapper,
+        IAsyncMapper<IEnumerable<Metadata>, IEnumerable<DTOs.V2.MetadataWithSourceV2>> metadataSourceMapper,
+        IMapper<DTOs.V2.MetadataSourceV2, Metadata> sourceMapper,
         IMapper<string, ObjectId> tagIdMapper,
         IOptions<MongoConfiguration> mongoConfig)
     {
         _tagRepository = tagRepository ?? throw new ArgumentNullException(nameof(tagRepository));
-        _tagCache = tagCache ?? throw new ArgumentNullException(nameof(tagCache));
         _metadataMapper = metadataMapper ?? throw new ArgumentNullException(nameof(metadataMapper));
+        _metadataSourceMapper = metadataSourceMapper ?? throw new ArgumentNullException(nameof(metadataSourceMapper));
+        _sourceMapper = sourceMapper ?? throw new ArgumentNullException(nameof(sourceMapper));
         _tagIdMapper = tagIdMapper ?? throw new ArgumentNullException(nameof(tagIdMapper));
 
         MongoConfiguration mongoConfigValue = mongoConfig.Value;
@@ -41,14 +42,77 @@ internal class MetadataRepository : IMetadataRepository
         _metadataCollection = database.GetCollection<Metadata>("v2_metadata");
     }
 
-    public async Task<DTOs.Metadata?> GetAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<DTOs.V2.MetadataV2?> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         Metadata? metadata = await _metadataCollection.Find(m => m.Id == ObjectId.Parse(id)).SingleOrDefaultAsync(cancellationToken);
 
         return _metadataMapper.Map(metadata);
     }
 
-    public async IAsyncEnumerable<DTOs.Metadata> SearchAsync(string[] allTags, string[] anyTags, int? limit, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task<(bool Created, DTOs.V2.MetadataV2 Metadata)> GetOrCreateAsync(DTOs.V2.MetadataSourceV2 source, CancellationToken cancellationToken = default)
+    {
+        FilterDefinition<Metadata> filter = Builders<Metadata>.Filter.Eq(u => u.Source.Uri, source.Uri);
+        Metadata? existing = await _metadataCollection.Find(filter).SingleOrDefaultAsync(cancellationToken);
+
+        if (existing != null)
+        {
+            return (false, _metadataMapper.Map(existing));
+        }
+
+        Metadata newMetadata = _sourceMapper.Map(source);
+        await _metadataCollection.InsertOneAsync(newMetadata, new InsertOneOptions(), cancellationToken);
+
+        return (true, _metadataMapper.Map(newMetadata));
+    }
+
+    public async Task UpdateFromSourceAsync(string id, DTOs.V2.MetadataSourceV2 source, CancellationToken cancellationToken = default)
+    {
+        FilterDefinition<Metadata> filter = Builders<Metadata>.Filter.Eq(u => u.Source.Uri, source.Uri);
+        Metadata? existing = await _metadataCollection.Find(filter).SingleOrDefaultAsync(cancellationToken);
+
+        if (existing == null || existing.Id.ToString() != id)
+        {
+            throw new NotFoundException();
+        }
+
+        var update = Builders<Metadata>.Update;
+        List<UpdateDefinition<Metadata>> updates = new();
+
+        var titleUpdate = update
+                            .Set(m => m.Title, source.Title)
+                            .Set(m => m.Source.Title, source.Title);
+
+        updates.Add(titleUpdate);
+
+        if (existing.Source.CreatorId == null)
+        {
+            // TODO: Validate creator exists?
+            updates.Add(update.Set(m => m.Source.CreatorId, ObjectId.Parse(source.CreatorId)));
+        }
+
+        if (string.IsNullOrEmpty(existing.Source.Id))
+        {
+            if (string.IsNullOrEmpty(source.Id))
+                throw new Exception("Source id must be set");
+
+            
+            updates.Add(update.Set(m => m.Source.Id, source.Id));
+        }
+
+        await _metadataCollection.UpdateOneAsync(filter, update.Combine(updates), new UpdateOptions(), cancellationToken);
+    }
+
+    public async Task<bool> ExistsIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        FilterDefinition<Metadata> filter = Builders<Metadata>.Filter.Eq(u => u.Id, ObjectId.Parse(id));
+
+        Metadata metadata = await _metadataCollection.Find(filter)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return metadata != null;
+    }
+
+    public async IAsyncEnumerable<DTOs.V2.MetadataV2> SearchAsync(string[] allTags, string[] anyTags, int? limit, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
 
@@ -82,7 +146,7 @@ internal class MetadataRepository : IMetadataRepository
         }
     }
 
-    public async IAsyncEnumerable<DTOs.Metadata> GetAllAsync(string? after, int limit, TagFilter tagFilter, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DTOs.V2.MetadataV2> GetAllAsync(string? after, int limit, TagFilter tagFilter, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
         FilterDefinition<Metadata> filter = filterBuilder.Empty;
@@ -129,46 +193,35 @@ internal class MetadataRepository : IMetadataRepository
         }
     }
 
-    public async IAsyncEnumerable<DTOs.MetadataWithSuggestedTags> GetTagSuggestionsAsync(string[] ids, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DTOs.V2.MetadataWithSourceV2> GetSourceAllAsync(string? after, int limit, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        IEnumerable<Tag> tags = await _tagCache.GetAsync(cancellationToken);
-        List<(Tag Tag, Regex Pattern)> tagPatterns = tags.SelectMany(t => t.Patterns.Select(p => (Tag: t, Pattern: new Regex(p, RegexOptions.IgnoreCase)))).ToList();
+        FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
+        FilterDefinition<Metadata> filter = filterBuilder.Empty;
 
-        FilterDefinition<Metadata> idFilter = Builders<Metadata>.Filter.In(m => m.Id, ids.Select(ObjectId.Parse));
+        SortDefinition<Metadata> order = Builders<Metadata>.Sort.Ascending(m => m.Id);
+
+        if (!string.IsNullOrEmpty(after))
+        {
+            ObjectId afterId = ObjectId.Parse(after);
+
+            filter &= Builders<Metadata>.Filter.Gt(m => m.Id, afterId);
+        }
 
         IAsyncCursor<Metadata> cursor = await _metadataCollection
-            .Find(idFilter)
+            .Find(filter)
+            .Sort(order)
+            .Limit(limit)
             .ToCursorAsync(cancellationToken);
 
-        while (await cursor.MoveNextAsync(cancellationToken))
+
+        List<Metadata> list = await cursor.ToListAsync(cancellationToken);
+        foreach (DTOs.V2.MetadataWithSourceV2 metadataWithSourceV2 in await _metadataSourceMapper.MapAsync(list, cancellationToken))
         {
-            foreach (Metadata metadata in cursor.Current)
-            {
-                HashSet<ObjectId> found = new();
-
-                foreach (string sourceTag in metadata.Source.Tags)
-                {
-                    IEnumerable<Tag> foundTags =
-                        tagPatterns.Where(t => t.Pattern.IsMatch(sourceTag)).Select(p => p.Tag);
-                    found.UnionWith(foundTags.Select(t => t.Id));
-                }
-
-                DTOs.Metadata map = _metadataMapper.Map(metadata);
-
-                yield return new DTOs.MetadataWithSuggestedTags
-                (
-                    map.Id,
-                    map.OriginalId,
-                    map.Uri,
-                    map.Title,
-                    map.Tags,
-                    found.Select(f => f.ToString()).ToArray()
-                );
-            }
+            yield return metadataWithSourceV2;
         }
     }
 
-    public async IAsyncEnumerable<DTOs.Metadata> GetForCollectionAsync(DTOs.Collection collection, string sortField, bool ascending, int page, int pageSize, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DTOs.V2.MetadataV2> GetForCollectionAsync(DTOs.Collection collection, string sortField, bool ascending, int page, int pageSize, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
         FilterDefinition<Metadata> filter = filterBuilder.Empty;

@@ -5,10 +5,10 @@ using Hafnia.DataAccess.MongoDB.Config;
 using Hafnia.DataAccess.MongoDB.Mappers.V2;
 using Hafnia.DataAccess.MongoDB.Models.V2;
 using Hafnia.DataAccess.Repositories.V2;
+using Hafnia.DTOs.V2;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Metadata = Hafnia.DTOs.Metadata;
 
 namespace Hafnia.DataAccess.MongoDB.Repositories.V2;
 
@@ -37,6 +37,24 @@ internal class CollectionRepository : EntityCacheBase<Collection>, ICollectionRe
         }
     }
 
+    public async IAsyncEnumerable<DTOs.Collection> GetChildrenAsync(string id, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<Collection> collections = await GetAsync(cancellationToken);
+
+        Collection? parentCollection = collections.SingleOrDefault(c => c.Id == ObjectId.Parse(id));
+        if (parentCollection == null)
+        {
+            throw new NotFoundException();
+        }
+
+        HashSet<ObjectId> childIds = parentCollection.Children?.ToHashSet() ?? new HashSet<ObjectId>();
+
+        foreach (Collection childCollection in collections.Where(c => childIds.Contains(c.Id)))
+        {
+            yield return _dtoMapper.Map(childCollection);
+        }
+    }
+
     protected override async Task<IEnumerable<Collection>> GetInnerAsync(CancellationToken cancellationToken)
     {
         return await Collection
@@ -44,7 +62,7 @@ internal class CollectionRepository : EntityCacheBase<Collection>, ICollectionRe
             .ToListAsync(cancellationToken);
     }
 
-    public async IAsyncEnumerable<Metadata> GetContentAsync(string id, string sortField, bool ascending, int page, int pageSize,
+    public async IAsyncEnumerable<MetadataV2> GetContentAsync(string id, string sortField, bool ascending, int page, int pageSize,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var collections = await GetAsync(cancellationToken);
@@ -55,7 +73,7 @@ internal class CollectionRepository : EntityCacheBase<Collection>, ICollectionRe
             throw new NotFoundException();
         }
 
-        await foreach (Metadata metadata in _metadataRepository.GetForCollectionAsync(_dtoMapper.Map(collection), sortField, ascending, page, pageSize, cancellationToken))
+        await foreach (MetadataV2 metadata in _metadataRepository.GetForCollectionAsync(_dtoMapper.Map(collection), sortField, ascending, page, pageSize, cancellationToken))
         {
             yield return metadata;
         }
