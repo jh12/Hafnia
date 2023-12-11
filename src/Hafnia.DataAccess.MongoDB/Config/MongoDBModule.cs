@@ -35,6 +35,7 @@ public class MongoDBModule : Module
     private static void RegisterMappers(ContainerBuilder builder)
     {
         builder.RegisterType<V2Mapper.CollectionMapper>().AsImplementedInterfaces();
+        builder.RegisterType<V2Mapper.CreatorMapper>().AsImplementedInterfaces();
         builder.RegisterType<V2Mapper.MetadataMapper>().AsImplementedInterfaces();
         builder.RegisterType<V2Mapper.TagMapper>().AsImplementedInterfaces();
     }
@@ -42,6 +43,7 @@ public class MongoDBModule : Module
     private static void RegisterRepositories(ContainerBuilder builder)
     {
         builder.RegisterType<CollectionRepository>().As<ICollectionRepository>().SingleInstance();
+        builder.RegisterType<CreatorRepository>().AsImplementedInterfaces().SingleInstance();
         builder.RegisterType<WorkRepository>().As<IWorkRepository>().SingleInstance();
         builder.RegisterType<TagRepository>().AsImplementedInterfaces().SingleInstance();
 
