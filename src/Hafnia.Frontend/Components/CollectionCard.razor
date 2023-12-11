@@ -1,0 +1,10 @@
+﻿@using Hafnia.DTOs
+
+<MudItem xs="12" Class="collection-card-overlay" @onclick="OnClick" Style="@((OnClick.HasDelegate ? "cursor: pointer;" : "") + _styleString)">
+    <MudImage Src="@($"/media/file/{Collection.ThumbnailId}/thumbnail")" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center"/>
+    <div class="collection-overlay">
+        <MudTooltip Text="@Collection.Name" Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <MudText>@Collection.Name</MudText>
+        </MudTooltip>
+    </div>
+</MudItem>

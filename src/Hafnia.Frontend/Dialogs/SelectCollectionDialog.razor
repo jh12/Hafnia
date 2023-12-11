@@ -1,0 +1,28 @@
+@using Hafnia.DTOs
+
+<MudDialog Style="min-height: 500px;">
+    <DialogContent>
+        <MudGrid Class="pa-2" Spacing="2">
+            @if (Collections != null)
+            {
+                @foreach (Collection collection in Collections)
+                {
+                    <CollectionCard Collection="collection" OnClick="() => CollectionClick(collection)" Height="128px" Width="128px" Style="max-width: 128px;"/>
+                }
+            }
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+
+@code {
+    [Parameter]
+    public IEnumerable<Collection>? Collections { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    private void CollectionClick(Collection collection)
+    {
+        MudDialog.Close(DialogResult.Ok(collection));
+    }
+}

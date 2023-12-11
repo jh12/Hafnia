@@ -1,38 +1,59 @@
 ﻿@page "/collections/{CollectionId?}"
 @using Hafnia.DTOs
+@using Hafnia.Frontend.Dialogs
 @using Hafnia.Frontend.Repositories
 
 @inject TagRepository TagRepository
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
+@inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.False">
     <MudGrid Class="mt-1 px-2">
-        <MudText Typo="Typo.h6" Class="mt-4 mb-2">Collections</MudText>
 
-        <MudGrid>
-            @foreach (Collection collection in _childCollections)
+        <MudStack Class="mt-4 mb-2" Row="true" Style="width: 100%;" AlignItems="AlignItems.Baseline" Spacing="2">
+            @if (_hasParent)
             {
-                <MudItem xs="6" sm="4" md="3" lg="2" Style="cursor: pointer;" @onclick="() => CollectionClicked(collection)">
-                    <MudCard Square="true" Elevation="4">
-                        <MudCardMedia Image="@($"/media/file/{collection.ThumbnailId}/thumbnail")" Height="124" />
-                        <MudCardContent Class="pa-2">
-                                <MudText Typo="Typo.body1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@collection.Name</MudText>
-                            </MudCardContent>
-                        </MudCard>
-                    </MudItem>
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" OnClick="NavigateToParent" />
             }
 
-        </MudGrid>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp">
+                <MudText Typo="Typo.h6">@(_selectedCollection == null ? "Collections" : _selectedCollection.Name)</MudText>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="true">
+                <MudText Typo="Typo.h6">Collections</MudText>
+            </MudHidden>
+
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopLeft">
+                <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnAction="ShowEditCollections" IconSize="Size.Small">Edit</MudMenuItem>
+            </MudMenu>
+
+            <MudHidden Breakpoint="Breakpoint.LgAndUp">
+                <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" OnClick="FilterCollection" Disabled="@_hasChildren"/>
+            </MudHidden>
+        </MudStack>
+
+        <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="true">
+            <MudGrid>
+                @foreach (Collection collection in _childCollections)
+                {
+                    <MudItem xs="6" sm="4" md="3" lg="1">
+                        <CollectionCard Collection="collection" OnClick="() => CollectionClicked(collection)" Height="128px" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudHidden>
 
         @if (_selectedContent.Any())
         {
-            <MudText Typo="Typo.h6" Class="mt-4 mb-2">@(_selectedCollection == null ? "Collections" : _selectedCollection.Name)</MudText>
+            <MudHidden Breakpoint="Breakpoint.LgAndUp" Invert="true">
+                <MudText Typo="Typo.h6" Class="mt-4 mb-2">@(_selectedCollection == null ? "Collections" : _selectedCollection.Name)</MudText>
+            </MudHidden>
 
-            <MudGrid Class="mt-2 mb-2 d-flex justify-center flex-grow-1 gap-4">
-                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1"/>
-                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" Disabled="_selectedContent.Length < PageSize"/>
-            </MudGrid>
+ @*            <MudGrid Class="mt-2 mb-2 d-flex justify-center flex-grow-1 gap-4">
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1" />
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" Disabled="_selectedContent.Length < PageSize" />
+            </MudGrid> *@
 
             <MudItem xs="12" Class="masonry-with-columns">
                 @foreach (Metadata metadata in _selectedContent)
@@ -49,7 +70,7 @@
             </MudItem>
 
             <MudGrid Class="mt-2 mb-12 d-flex justify-center flex-grow-1 gap-4">
-                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1"/>
+                <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="Page == 1" />
                 <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" Disabled="_selectedContent.Length < PageSize" />
             </MudGrid>
         }
@@ -80,10 +101,13 @@
     public string? CollectionId { get; set; }
 
     [SupplyParameterFromQuery]
-    public int Page { get; set; } = 1;
+    public int Page { get; set; }
 
     [SupplyParameterFromQuery]
-    public int PageSize { get; set; } = 100;
+    public int PageSize { get; set; }
+
+    private bool _hasParent { get; set; }
+    private bool _hasChildren { get; set; }
 
     private Dictionary<string, Tag> _tagMap = new();
 
@@ -93,7 +117,10 @@
     private Metadata[] _selectedContent = Array.Empty<Metadata>();
     private Collection[] _childCollections = Array.Empty<Collection>();
 
+    private Dictionary<string, string> _childToParentMap = new();
+
     private bool _isOverlayVisible;
+    private bool _isCollectionEditVisible;
     private Metadata? _focusedContent;
 
     protected override async Task OnInitializedAsync()
@@ -106,9 +133,20 @@
     {
         await base.OnParametersSetAsync();
 
+        Page = Page == 0 ? 1 : Page;
+        PageSize = PageSize == 0 ? 24 : PageSize;
+
         if (_allCollections == null)
         {
             _allCollections = (await HttpClient.GetFromJsonAsync<Collection[]>("v2/collection"))!;
+
+            foreach (Collection parentCollection in _allCollections)
+            {
+                foreach (string childCollection in parentCollection.Children)
+                {
+                    _childToParentMap.Add(childCollection, parentCollection.Id);
+                }
+            }
         }
 
         Dictionary<string, Collection> collectionMap = _allCollections.ToDictionary(c => c.Id);
@@ -118,6 +156,8 @@
             _selectedCollection = _allCollections.SingleOrDefault(c => c.Id == CollectionId);
             _childCollections = _selectedCollection?.Children.Select(c => collectionMap[c]).ToArray() ?? Array.Empty<Collection>();
 
+            Console.WriteLine($"Page: {Page}, PageSize: {PageSize}");
+
             _selectedContent = (await HttpClient.GetFromJsonAsync<Metadata[]>($"v2/collection/{CollectionId}/content?page={Page}&pageSize={PageSize}"))!;
         }
         else
@@ -126,11 +166,31 @@
             _childCollections = _allCollections.Where(c => c.IsRoot).ToArray();
             _selectedContent = Array.Empty<Metadata>();
         }
+
+        _hasParent = _selectedCollection is not null;
+
+        _hasChildren = !_selectedCollection?.Children.Any() ?? false;
     }
 
     private void CollectionClicked(Collection collection)
     {
         NavigationManager.NavigateTo($"/collections/{collection.Id}");
+    }
+
+    private void NavigateToParent()
+    {
+        if (_selectedCollection != null)
+        {
+            if (_selectedCollection.IsRoot)
+            {
+                NavigationManager.NavigateTo($"/collections");
+            }
+            else
+            {
+                string parentId = _childToParentMap[_selectedCollection.Id];
+                NavigationManager.NavigateTo($"/collections/{parentId}");
+            }
+        }
     }
 
     private void PreviousPage()
@@ -146,10 +206,10 @@
     private void NavigateToPage(int page)
     {
         string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            ["page"] = page,
-            ["pageSize"] = PageSize
-        });
+            {
+                ["page"] = page,
+                ["pageSize"] = PageSize
+            });
 
         NavigationManager.NavigateTo(newUri);
     }
@@ -160,4 +220,32 @@
         _isOverlayVisible = true;
         StateHasChanged();
     }
+
+    private void ShowEditCollections()
+    {
+        DialogOptions options = new DialogOptions()
+            {
+                MaxWidth = MaxWidth.Large
+            };
+        var parameters = new DialogParameters<EditCollectionDialog> { { x => x.Collections, _childCollections } };
+
+        DialogService.Show<EditCollectionDialog>("Edit collections", parameters, options);
+    }
+
+    private async Task FilterCollection()
+    {
+        DialogOptions options = new DialogOptions()
+        {
+            DisableBackdropClick = false,
+            MaxWidth = MaxWidth.Medium
+        };
+        var parameters = new DialogParameters<SelectCollectionDialog> { { x => x.Collections, _childCollections } };
+
+        DialogResult result = await DialogService.Show<SelectCollectionDialog>("Select collection", parameters, options).Result;
+
+        Collection? selectedCollection = result.Data as Collection;
+        if(selectedCollection != null)
+            CollectionClicked(selectedCollection);
+    }
+
 }

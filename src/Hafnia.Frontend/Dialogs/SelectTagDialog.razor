@@ -1,0 +1,63 @@
+﻿@using Hafnia.DTOs
+@using Hafnia.Frontend.Repositories
+
+@inject TagRepository TagRepository
+
+<MudDialog Style="min-height: 500px;">
+    <DialogContent>
+        <MudTextField @bind-Value="SearchValue" Label="Search" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" DebounceInterval="500"/>
+        <MudChipSet MultiSelection="true" @bind-SelectedChips="_selected">
+            @foreach (Tag tag in FilteredTags)
+            {
+                <MudChip Text="@tag.Name" Tag="tag" Size="Size.Small" Label="true" Variant="Variant.Outlined" SelectedColor="Color.Success"/>
+            }
+        </MudChipSet>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Select">Select</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+
+    private string SearchValue
+    {
+        get => _searchValue;
+        set
+        {
+            _searchValue = value;
+            UpdateFilter();
+        }
+    }
+
+    private MudChip[] _selected = Array.Empty<MudChip>();
+    private string _searchValue = string.Empty;
+
+    private Tag[] Tags { get; set; } = Array.Empty<Tag>();
+    private IEnumerable<Tag> FilteredTags { get; set; } = Array.Empty<Tag>();
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tags = (await TagRepository.GetAllTagsAsync()).OrderBy(t => t.Name).ToArray();
+        
+        UpdateFilter();
+    }
+
+    private void UpdateFilter()
+    {
+        Console.WriteLine("Update");
+        FilteredTags = Tags.Where(t => t.Name.Contains(_searchValue, StringComparison.CurrentCultureIgnoreCase));
+        StateHasChanged();
+    }
+
+    private void Select()
+    {
+        Console.WriteLine(_selected.Select(c => c.Tag));
+
+        MudDialog.Close(DialogResult.Ok(_selected.Select(c => (Tag)c.Tag!).ToArray()));
+    }
+
+}

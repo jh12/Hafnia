@@ -1,7 +1,10 @@
 ﻿@inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode="true" />
-<MudDialogProvider />
+<MudDialogProvider 
+    DisableBackdropClick="true"
+    CloseButton="true"
+    CloseOnEscapeKey="true"/>
 @* <MudPopoverProvider /> *@
 <MudSnackbarProvider />
 

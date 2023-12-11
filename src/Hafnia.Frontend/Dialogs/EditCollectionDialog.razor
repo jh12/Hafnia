@@ -1,0 +1,184 @@
+﻿@using Hafnia.DTOs
+@using Hafnia.Frontend.Repositories
+
+@inject TagRepository TagRepository
+@inject HttpClient HttpClient
+@inject IDialogService DialogService
+
+<MudDialog Style="min-height: 500px;">
+    <DialogContent>
+        <MudGrid Class="pa-2" Spacing="2">
+            @if (Collections != null)
+            {
+                @foreach (Collection collection in Collections)
+                {
+                    <MudItem xs="6" sm="4" md="3" lg="2">
+                        <CollectionCard Collection="collection" OnClick="() => CollectionClick(collection)" Height="128px" />
+                    </MudItem>
+                }
+
+                <MudDialog @bind-IsVisible="_editVisible" Style="min-height: 450px;">
+                    <DialogContent>
+                        <MudGrid Class="pa-2">
+                            @if (_selectedCollection != null && _isCollectionReady)
+                            {
+                                <MudItem MudItem xs="6" Class="pa-0 mr-4">
+                                    <MudImage Src="@($"/media/file/{_selectedCollection.ThumbnailId}/thumbnail")"
+                                              ObjectFit="ObjectFit.Cover"
+                                              ObjectPosition="ObjectPosition.Center"
+                                              Style="height: 124px; width:250px;" />
+                                </MudItem>
+
+                                <MudItem xs="5" md="4" Class="ma-0 pa-0">
+                                    <MudInput @bind-Value="CollectionTitle" Variant="Variant.Text" />
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudItem Class="mt-2">
+                                        <MudText>Included tags</MudText>
+                                        <MudItem Style="margin-left:-4px;">
+                                            @foreach (string tag in _includedTags)
+                                            {
+                                                <MudChip Size="Size.Small" Text="@_tagMap[tag].Name" OnClose="() => RemoveIncludedTag(tag)" />
+                                            }
+                                            <MudChip Size="Size.Small" Text="+" Color="Color.Dark" OnClick="AddIncludedTag" />
+                                        </MudItem>
+                                    </MudItem>
+
+                                    <MudItem Class="mt-2">
+                                        <MudText>Excluded tags</MudText>
+                                        <MudItem Style="margin-left:-4px;">
+                                            @foreach (string tag in _excludedTags)
+                                            {
+                                                <MudChip Size="Size.Small" Text="@_tagMap[tag].Name" OnClose="() => RemoveExcludedTag(tag)" />
+                                            }
+                                            <MudChip Size="Size.Small" Text="+" Color="Color.Dark" OnClick="AddExcludedTag" />
+                                        </MudItem>
+                                    </MudItem>
+                                </MudItem>
+
+
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.h6">Children</MudText>
+                                    <MudGrid>
+                                        @foreach (Collection child in _children)
+                                        {
+                                            <MudItem xs="6" sm="4" md="3" lg="2">
+                                                <CollectionCard Collection="child" />
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                </MudItem>
+                            }
+                            else
+                            {
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="250px" Height="250px" />
+
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="250px" />
+
+                                <MudGrid>
+                                    <MudItem xs="6" sm="4" md="3" lg="2">
+                                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="124px" Height="124px" />
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" md="3" lg="2">
+                                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="124px" Height="124px" />
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" md="3" lg="2">
+                                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="124px" Height="124px" />
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudGrid>
+                    </DialogContent>
+                </MudDialog>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [Parameter]
+    public IEnumerable<Collection>? Collections { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    private bool _editVisible;
+
+    private Collection? _selectedCollection;
+
+    private Collection[] _children = Array.Empty<Collection>();
+    private string? CollectionTitle { get; set; }
+    private HashSet<string> _includedTags = new();
+    private HashSet<string> _excludedTags = new();
+
+    private Dictionary<string, Tag> _tagMap = new();
+
+    private bool _isCollectionReady;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!_tagMap.Any())
+        {
+            Tag[] tags = await TagRepository.GetAllTagsAsync();
+            _tagMap = tags.ToDictionary(t => t.Id);
+        }
+    }
+
+    private async Task CollectionClick(Collection collection)
+    {
+        _isCollectionReady = false;
+
+        _children = (await HttpClient.GetFromJsonAsync<Collection[]>($"v2/collection/{collection.Id}/children"))!;
+        CollectionTitle = collection.Name;
+        _includedTags = new HashSet<string>(collection.IncludedTags);
+        _excludedTags = new HashSet<string>(collection.ExcludedTags);
+
+        _selectedCollection = collection;
+
+        _isCollectionReady = true;
+
+        _editVisible = true;
+    }
+
+    private async Task AddIncludedTag()
+    {
+        DialogResult dialogResult = await (await DialogService.ShowAsync<SelectTagDialog>()).Result;
+        if (!dialogResult.Canceled)
+        {
+            Tag[] selectedTags = (Tag[])dialogResult.Data;
+            _includedTags.UnionWith(selectedTags.Select(t => t.Id));
+        }
+    }
+
+    private void RemoveIncludedTag(string id)
+    {
+        _includedTags.Remove(id);
+    }
+
+    private async Task AddExcludedTag()
+    {
+        DialogResult dialogResult = await (await DialogService.ShowAsync<SelectTagDialog>()).Result;
+        if (!dialogResult.Canceled)
+        {
+            Tag[] selectedTags = (Tag[])dialogResult.Data;
+            _excludedTags.UnionWith(selectedTags.Select(t => t.Id));
+        }
+    }
+
+    private void RemoveExcludedTag(string id)
+    {
+        _excludedTags.Remove(id);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+}
