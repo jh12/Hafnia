@@ -16,7 +16,7 @@ internal class CreatorRepository : EntityCacheBase<Creator>, ICreatorRepository
     public CreatorRepository
     (
         IMapper<Creator, DTOs.Creator> dtoMapper,
-        IMongoClient client, 
+        IMongoClient client,
         IOptions<MongoConfiguration> mongoConfig
     ) : base(client, mongoConfig, "v2_creator")
     {

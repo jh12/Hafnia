@@ -1,0 +1,120 @@
+﻿@page "/media/newest"
+@using Hafnia.DTOs
+@using Hafnia.Frontend.Repositories
+
+@inject TagRepository TagRepository
+@inject HttpClient HttpClient
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudGrid Class="mt-1 px-2">
+
+        <MudItem xs="12" Class="masonry-with-columns">
+            @foreach (Metadata metadata in _currentPage)
+            {
+                <MudItem Class="masonry-with-columns-item image-with-overlay" @onclick="() => MetadataClicked(metadata)">
+                    <MudImage Src="@($"/media/file/{metadata.Id}/thumbnail")" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" />
+                    <div class="image-overlay">
+                        <div>
+                            <MudText Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@(string.IsNullOrEmpty(metadata.Title) ? metadata.Id : metadata.Title)</MudText>
+                        </div>
+                    </div>
+                </MudItem>
+            }
+        </MudItem>
+
+        <MudGrid Class="mt-2 mb-12 d-flex justify-center flex-grow-1 gap-4">
+            <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateBefore" OnClick="PreviousPage" Disabled="_page == 1" />
+            <MudIconButton Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NavigateNext" OnClick="NextPage" />
+        </MudGrid>
+
+        <MudOverlay @bind-Visible="_isOverlayVisible" DarkBackground="true" ZIndex="9999" AutoClose="true">
+            @if (_focusedContent != null)
+            {
+                <MudItem Class="object-top">
+                    <MudItem Class="py-2">
+                        <MudText>@_focusedContent.Title</MudText>
+                            <MudItem Style="margin-left:-4px;">
+                                @foreach (string tag in _focusedContent.Tags)
+                            {
+                                <MudChip Text="@_tagMap[tag].Name" Size="Size.Small" Label="true" />
+                            }
+                        </MudItem>
+                    </MudItem>
+                    <MudImage Src="@($"/media/file/{_focusedContent.Id}")" ObjectFit="ObjectFit.Contain" ObjectPosition="ObjectPosition.Top" Fluid="true" Style="max-height: 75vmin" />
+                </MudItem>
+            }
+        </MudOverlay>
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private Dictionary<string, Tag> _tagMap = new();
+    private Metadata[] _metadata = Array.Empty<Metadata>();
+
+    private const int PageSize = 24;
+    private const int RequestSize = 1000;
+    private int _page = 1;
+
+    private Metadata[] _currentPage = Array.Empty<Metadata>();
+
+    private bool _isOverlayVisible;
+    private Metadata? _focusedContent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tag[] tags = await TagRepository.GetAllTagsAsync();
+        _tagMap = tags.ToDictionary(t => t.Id);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        _metadata = (await HttpClient.GetFromJsonAsync<Metadata[]>($"v2/metadata/all?newestFirst=true&limit={RequestSize}"))!;
+
+        await NavigateToPage(_page);
+    }
+
+    private async Task PreviousPage()
+    {
+        await NavigateToPage(_page - 1);
+    }
+
+    private async Task NextPage()
+    {
+        await NavigateToPage(_page + 1);
+    }
+
+    private async Task NavigateToPage(int page)
+    {
+        Range pageRange = new Range(Math.Max((page - 1) * PageSize, 0), Math.Min(page * PageSize, _metadata.Length));
+        var nextPage = _metadata[pageRange];
+
+        if (nextPage.Length < PageSize)
+        {
+            _metadata = (await HttpClient.GetFromJsonAsync<Metadata[]>($"v2/metadata/all?newestFirst=true&limit={RequestSize}&after={nextPage.Last().Id}"))!;
+
+            var currentPage = new Metadata[nextPage.Length + RequestSize];
+            nextPage.CopyTo(currentPage, 0);
+            _metadata.CopyTo(currentPage, nextPage.Length);
+
+            _currentPage = currentPage;
+
+            page = 1;
+        }
+        else
+        {
+            _currentPage = nextPage;
+        }
+
+        _page = page;
+    }
+
+    private void MetadataClicked(Metadata metadata)
+    {
+        _focusedContent = metadata;
+        _isOverlayVisible = true;
+        StateHasChanged();
+    }
+}

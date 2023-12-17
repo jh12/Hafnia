@@ -1,4 +1,4 @@
-﻿using Hafnia.DataAccess.MongoDB.Cache;
+using Hafnia.DataAccess.MongoDB.Cache;
 using Hafnia.DTOs;
 using Hafnia.DTOs.V2;
 using MongoDB.Bson;
@@ -30,7 +30,7 @@ internal class MetadataMapper : IMapper<Db.Metadata?, Metadata?>, IMapper<Db.Met
         );
     }
 
-    MetadataV2 IMapper<Db.Metadata?, MetadataV2?>.Map(Db.Metadata? toMap)
+    MetadataV2? IMapper<Db.Metadata?, MetadataV2?>.Map(Db.Metadata? toMap)
     {
         if (toMap == null)
             return null;

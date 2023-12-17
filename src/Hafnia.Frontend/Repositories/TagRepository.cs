@@ -36,7 +36,5 @@ internal class TagRepository
         {
             _semaphore.Release();
         }
-
-        
     }
 }

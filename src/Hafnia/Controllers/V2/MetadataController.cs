@@ -1,4 +1,4 @@
-﻿using Hafnia.DataAccess.Exceptions;
+using Hafnia.DataAccess.Exceptions;
 using Hafnia.DataAccess.Models;
 using Hafnia.DataAccess.Repositories.V2;
 using Hafnia.DTOs.V2;
@@ -74,7 +74,7 @@ public class MetadataController : ControllerBase
     }
 
     [HttpGet("all")]
-    public IAsyncEnumerable<MetadataV2> GetAll(string? after, int limit, string? tagInclude = null, string? tagExclude = null, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MetadataV2> GetAll(string? after, int limit, string? tagInclude = null, string? tagExclude = null, bool newestFirst = false, CancellationToken cancellationToken = default)
     {
         if (limit < 1)
             limit = 0;
@@ -87,7 +87,7 @@ public class MetadataController : ControllerBase
 
         TagFilter tagFilter = new TagFilter(tagIncludeArray, tagExcludeArray);
 
-        return _metadataRepository.GetAllAsync(after, limit, tagFilter, cancellationToken);
+        return _metadataRepository.GetAllAsync(after, limit, tagFilter, newestFirst, cancellationToken);
     }
 
     [HttpGet("source/all")]

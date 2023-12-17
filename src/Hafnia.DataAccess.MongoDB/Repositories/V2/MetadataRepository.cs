@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Hafnia.DataAccess.Exceptions;
 using Hafnia.DataAccess.Models;
 using Hafnia.DataAccess.MongoDB.Config;
@@ -95,7 +95,7 @@ internal class MetadataRepository : IMetadataRepository
             if (string.IsNullOrEmpty(source.Id))
                 throw new Exception("Source id must be set");
 
-            
+
             updates.Add(update.Set(m => m.Source.Id, source.Id));
         }
 
@@ -146,18 +146,21 @@ internal class MetadataRepository : IMetadataRepository
         }
     }
 
-    public async IAsyncEnumerable<DTOs.V2.MetadataV2> GetAllAsync(string? after, int limit, TagFilter tagFilter, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DTOs.V2.MetadataV2> GetAllAsync(string? after, int limit, TagFilter tagFilter, bool newestFirst, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinitionBuilder<Metadata> filterBuilder = Builders<Metadata>.Filter;
         FilterDefinition<Metadata> filter = filterBuilder.Empty;
 
-        SortDefinition<Metadata> order = Builders<Metadata>.Sort.Ascending(m => m.Id);
+        SortDefinition<Metadata> order = newestFirst ? Builders<Metadata>.Sort.Descending(m => m.Id) : Builders<Metadata>.Sort.Ascending(m => m.Id);
 
         if (!string.IsNullOrEmpty(after))
         {
             ObjectId afterId = ObjectId.Parse(after);
 
-            filter &= Builders<Metadata>.Filter.Gt(m => m.Id, afterId);
+            if (newestFirst)
+                filter &= Builders<Metadata>.Filter.Lt(m => m.Id, afterId);
+            else
+                filter &= Builders<Metadata>.Filter.Gt(m => m.Id, afterId);
         }
 
         if (tagFilter.Include.Any())

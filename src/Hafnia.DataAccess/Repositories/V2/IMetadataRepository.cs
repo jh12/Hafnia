@@ -1,4 +1,4 @@
-﻿using Hafnia.DataAccess.Models;
+using Hafnia.DataAccess.Models;
 using Hafnia.DTOs;
 using Hafnia.DTOs.V2;
 
@@ -14,7 +14,7 @@ public interface IMetadataRepository
 
     IAsyncEnumerable<MetadataV2> SearchAsync(string[] allTags, string[] anyTags, int? limit, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<MetadataV2> GetAllAsync(string? after, int limit, TagFilter tagFilter, CancellationToken cancellation = default);
+    IAsyncEnumerable<MetadataV2> GetAllAsync(string? after, int limit, TagFilter tagFilter, bool newestFirst = false, CancellationToken cancellation = default);
     IAsyncEnumerable<MetadataWithSourceV2> GetSourceAllAsync(string? after, int limit, CancellationToken cancellationToken);
 
     IAsyncEnumerable<MetadataV2> GetForCollectionAsync(Collection collection, string sortField, bool ascending, int page, int pageSize, CancellationToken cancellationToken);
