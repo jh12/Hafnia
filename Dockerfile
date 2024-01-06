@@ -8,33 +8,30 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG TARGETARCH
 ARG RELEASE_VERSION
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
+WORKDIR /sln
 
-COPY Hafnia.sln .
-COPY src/Hafnia/Hafnia.csproj src/Hafnia/
-COPY src/Hafnia.Frontend/Hafnia.Frontend.csproj src/Hafnia.Frontend/
-COPY src/Hafnia.DataAccess/Hafnia.DataAccess.csproj src/src/Hafnia.DataAccess/
-COPY src/Hafnia.DataAccess.Minio/Hafnia.DataAccess.Minio.csproj src/src/Hafnia.DataAccess.Minio/
-COPY src/Hafnia.DataAccess.MongoDB/Hafnia.DataAccess.MongoDB.csproj src/src/Hafnia.DataAccess.MongoDB/
+COPY ./*.sln ./
+COPY src/Hafnia src/Hafnia
+COPY src/Hafnia.Frontend src/Hafnia.Frontend
+COPY src/Hafnia.DataAccess src/Hafnia.DataAccess
+COPY src/Hafnia.DataAccess.Minio src/Hafnia.DataAccess.Minio
+COPY src/Hafnia.DataAccess.MongoDB src/Hafnia.DataAccess.MongoDB
+
+COPY src/Hafnia.Shared/src/Hafnia.DTOs src/Hafnia.Shared/src/Hafnia.DTOs
 
 RUN ls -l .
 RUN ls -l src/
-#RUN ls -l src/src/
-#RUN ls -l src/src/src/Hafnia
-#RUN ls -l src/src/Hafnia
 
-#RUN dotnet restore -a $TARGETARCH
-RUN dotnet restore -a $TARGETARCH "./src/Hafnia/./Hafnia.csproj"
-RUN dotnet restore -a $TARGETARCH "./src/Hafnia.Frontend/./Hafnia.Frontend.csproj"
+# TODO: Fix caching
+RUN dotnet restore -a $TARGETARCH
 
-COPY ./src ./
-WORKDIR "/src/Hafnia"
-RUN dotnet build "./Hafnia/Hafnia.csproj" -c $BUILD_CONFIGURATION -a $TARGETARCH -o /app/build
+COPY ./src ./src
+RUN dotnet build "./src/Hafnia/Hafnia.csproj" -c $BUILD_CONFIGURATION -a $TARGETARCH -o /app/build
 
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Hafnia.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:VersionPrefix=$RELEASE_VERSION
+RUN dotnet publish "./src/Hafnia/Hafnia.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:VersionPrefix=$RELEASE_VERSION
 
 
 FROM base AS final
