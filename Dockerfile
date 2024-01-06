@@ -11,18 +11,21 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 COPY Hafnia.sln .
-COPY src/Hafnia/Hafnia.csproj src/src/Hafnia/
-COPY src/Hafnia.Frontend/Hafnia.Frontend.csproj src/src/Hafnia.Frontend/
+COPY src/Hafnia/Hafnia.csproj src/Hafnia/
+COPY src/Hafnia.Frontend/Hafnia.Frontend.csproj src/Hafnia.Frontend/
 COPY src/Hafnia.DataAccess/Hafnia.DataAccess.csproj src/src/Hafnia.DataAccess/
 COPY src/Hafnia.DataAccess.Minio/Hafnia.DataAccess.Minio.csproj src/src/Hafnia.DataAccess.Minio/
 COPY src/Hafnia.DataAccess.MongoDB/Hafnia.DataAccess.MongoDB.csproj src/src/Hafnia.DataAccess.MongoDB/
 
 RUN ls -l .
 RUN ls -l src/
-RUN ls -l src/src/
-RUN ls -l src/src/Hafnia
+#RUN ls -l src/src/
+#RUN ls -l src/src/src/Hafnia
+#RUN ls -l src/src/Hafnia
 
-RUN dotnet restore -a $TARGETARCH
+#RUN dotnet restore -a $TARGETARCH
+RUN dotnet restore -a $TARGETARCH "./src/Hafnia/./Hafnia.csproj"
+RUN dotnet restore -a $TARGETARCH "./src/Hafnia.Frontend/./Hafnia.Frontend.csproj"
 
 COPY ./src ./
 WORKDIR "/src/Hafnia"
