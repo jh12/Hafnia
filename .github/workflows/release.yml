@@ -44,7 +44,7 @@ jobs:
         builder: ${{ steps.buildx.outputs.name }}
         platforms: linux/amd64,linux/arm64
         context: .
-        #push: true
+        push: true
         provenance: false
         tags: |
           octothorp.azurecr.io/hafnia:${{ steps.gitversion.outputs.NuGetVersionV2 }}
